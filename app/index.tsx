@@ -10,13 +10,13 @@ const index = () => {
       <Text style={styles.title}>Tic Tac Toe</Text>
       <TouchableOpacity
         style={styles.button}
-        onPress={() => router.push("/gameSettings")}
+        onPress={() => router.push("/gamePlay")}
       >
         <Text style={styles.buttonText}>Muliplayers</Text>
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.button}
-        onPress={() => router.push("/gamePlay")}
+        onPress={() => router.push("/gameSettings")}
       >
         <Text style={styles.buttonText}>Singleplayer</Text>
       </TouchableOpacity>
