@@ -33,20 +33,35 @@ export default function SignIn() {
       </View>
 
       <Formik
-        initialValues={{ email: "", password: "", passwordConfirm: "" }}
+        initialValues={{
+          nickname: "",
+          email: "",
+          password: "",
+          passwordConfirm: "",
+        }}
         validationSchema={signInSchema}
         onSubmit={(values) => {
           if (values.password !== values.passwordConfirm) {
             alert("Passwords do not match");
             return;
           }
-          signup(values.email, values.password);
+          signup(values.email, values.password, values.nickname);
           router.push("/");
         }}
       >
         {({ handleChange, handleBlur, handleSubmit, values, errors }) => (
           <View style={styles.body}>
             <View>
+              <TextInput
+                style={styles.input}
+                placeholder="Nickname"
+                onChangeText={handleChange("nickname")}
+                onBlur={handleBlur("nickname")}
+                value={values.nickname}
+              />
+              {errors.nickname && (
+                <Text style={styles.error}>{errors.nickname}</Text>
+              )}
               <TextInput
                 style={styles.input}
                 placeholder="Email"

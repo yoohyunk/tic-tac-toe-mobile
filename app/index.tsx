@@ -36,7 +36,7 @@ const index = () => {
           style={styles.button}
           onPress={async () => {
             try {
-              await logout(); // Call the logout function from context
+              await logout();
               console.log("Logged out successfully");
             } catch (error) {
               console.error("Error during logout", error);
