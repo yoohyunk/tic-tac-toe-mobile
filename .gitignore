@@ -2,12 +2,24 @@
 
 # dependencies
 node_modules/
+npm-debug.log*
+yarn-error.log
+
+# Firebase configuration files (sensitive data)
+google-services.json
+GoogleService-Info.plist
+
 
 # Expo
 .expo/
 dist/
 web-build/
 expo-env.d.ts
+.expo-shared/
+babel-loader-cache/
+metro-cache/
+cache/
+
 
 # Native
 *.orig.*
@@ -34,3 +46,11 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+# Lock files (choose one based on package manager)
+package-lock.json
+yarn.lock
+
+# Firebase Firestore rules and indexes (optional)
+firestore.rules.bkp
+firestore.indexes.json.bkp
