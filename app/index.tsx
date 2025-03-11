@@ -1,10 +1,14 @@
 import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
+import { useAuth } from "../contexts/AuthContext";
 
-import React from "react";
+import React, { useEffect } from "react";
+import SignIn from "../signIn";
 
 const index = () => {
   const router = useRouter();
+  const { logout } = useAuth();
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -15,7 +19,7 @@ const index = () => {
       <View>
         <TouchableOpacity
           style={styles.button}
-          onPress={() => router.push("/gamePlay")}
+          onPress={() => router.push("/preGameSettings")}
         >
           <Text style={styles.buttonText}>MULTIPLAYER</Text>
         </TouchableOpacity>
@@ -28,6 +32,19 @@ const index = () => {
         <View style={styles.button3}>
           <Text style={styles.buttonText}>SETTINGS</Text>
         </View>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={async () => {
+            try {
+              await logout(); // Call the logout function from context
+              console.log("Logged out successfully");
+            } catch (error) {
+              console.error("Error during logout", error);
+            }
+          }}
+        >
+          <Text style={styles.buttonText}>SIGN IN</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );

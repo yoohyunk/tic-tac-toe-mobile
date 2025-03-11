@@ -1,15 +1,27 @@
+// app/_layout.tsx
 import { useEffect } from "react";
-import { useRouter, Slot, usePathname } from "expo-router";
+import { AuthProvider, useAuth } from "../contexts/AuthContext";
+import { Slot, useRouter } from "expo-router";
 
 export default function RootLayout() {
+  return (
+    <AuthProvider>
+      <AuthSwitch />
+    </AuthProvider>
+  );
+}
+
+const AuthSwitch = () => {
   const router = useRouter();
-  const pathname = usePathname();
+  const { user } = useAuth();
 
   useEffect(() => {
-    if (pathname !== "/signIn") {
-      router.replace("/signIn"); // Redirect to Sign-In on app start
+    if (!user) {
+      router.replace("/signIn");
+    } else {
+      router.replace("/");
     }
-  }, []);
+  }, [user]);
 
   return <Slot />;
-}
+};

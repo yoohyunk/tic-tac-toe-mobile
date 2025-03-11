@@ -1,14 +1,16 @@
+// screens/signIn.tsx
+import React from "react";
 import {
   StyleSheet,
   Text,
   View,
   TouchableOpacity,
   TextInput,
-  Button,
 } from "react-native";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import { useRouter } from "expo-router";
+import { useAuth } from "../contexts/AuthContext"; // Use the global auth context
 
 const signInSchema = Yup.object().shape({
   email: Yup.string().email("Invalid email").required("Email is required"),
@@ -19,6 +21,7 @@ const signInSchema = Yup.object().shape({
 
 export default function SignIn() {
   const router = useRouter();
+  const { login } = useAuth(); // Get login function from context
 
   return (
     <View style={styles.container}>
@@ -31,9 +34,12 @@ export default function SignIn() {
       <Formik
         initialValues={{ email: "", password: "" }}
         validationSchema={signInSchema}
-        onSubmit={(values) => {
-          console.log(values);
-          router.push("/");
+        onSubmit={async (values) => {
+          try {
+            const user = await login(values.email, values.password);
+          } catch (error) {
+            alert("An error occurred during login");
+          }
         }}
       >
         {({ handleChange, handleBlur, handleSubmit, values, errors }) => (
@@ -47,7 +53,6 @@ export default function SignIn() {
                 value={values.email}
               />
               {errors.email && <Text style={styles.error}>{errors.email}</Text>}
-
               <TextInput
                 style={styles.input}
                 placeholder="Password"
@@ -67,9 +72,12 @@ export default function SignIn() {
               >
                 <Text style={styles.buttonText}>Sign in</Text>
               </TouchableOpacity>
-              <View style={styles.button2}>
-                <Text style={styles.buttonText}>sign in</Text>
-              </View>
+              <TouchableOpacity
+                style={styles.button}
+                onPress={() => router.push("/signUp")}
+              >
+                <Text style={styles.buttonText}>Sign up</Text>
+              </TouchableOpacity>
             </View>
           </View>
         )}
@@ -92,7 +100,6 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: "#40395b",
-
     justifyContent: "space-between",
     width: "100%",
     alignContent: "center",
@@ -125,15 +132,6 @@ const styles = StyleSheet.create({
     color: "#fff",
     textAlign: "right",
   },
-  headerbutton: {
-    alignItems: "center",
-    padding: 10,
-  },
-  headerbuttonText: {
-    color: "#FFFFFF",
-    fontSize: 25,
-    fontWeight: "bold",
-  },
   input: {
     width: 320,
     height: 50,
@@ -154,26 +152,13 @@ const styles = StyleSheet.create({
   },
   buttons: {
     flex: 1,
-
     gap: 20,
   },
-
   button: {
     backgroundColor: "#fcd45c",
     paddingVertical: 6,
     paddingHorizontal: 20,
     borderRadius: 8,
-
-    width: 320,
-    alignItems: "center",
-    alignSelf: "center",
-  },
-  button2: {
-    backgroundColor: "#898dc4",
-    paddingVertical: 6,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-
     width: 320,
     alignItems: "center",
     alignSelf: "center",
@@ -185,7 +170,6 @@ const styles = StyleSheet.create({
   footer: {
     height: 70,
     padding: 10,
-
     paddingBottom: 30,
     justifyContent: "center",
     alignItems: "center",
