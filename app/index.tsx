@@ -7,19 +7,28 @@ const index = () => {
   const router = useRouter();
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Tic Tac Toe</Text>
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => router.push("/gamePlay")}
-      >
-        <Text style={styles.buttonText}>Muliplayers</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => router.push("/gameSettings")}
-      >
-        <Text style={styles.buttonText}>Singleplayer</Text>
-      </TouchableOpacity>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle1}>Tic{"      "}</Text>
+        <Text style={styles.headerTitle2}>Tac</Text>
+        <Text style={styles.headerTitle3}>{"      "}Toe</Text>
+      </View>
+      <View>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => router.push("/gamePlay")}
+        >
+          <Text style={styles.buttonText}>MULTIPLAYER</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.button2}
+          onPress={() => router.push("/preGameSettings")}
+        >
+          <Text style={styles.buttonText}>SINGLEPLAYER</Text>
+        </TouchableOpacity>
+        <View style={styles.button3}>
+          <Text style={styles.buttonText}>SETTINGS</Text>
+        </View>
+      </View>
     </View>
   );
 };
@@ -31,7 +40,37 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F5F5F5",
+    backgroundColor: "#40395b",
+    gap: 20,
+  },
+  header: {
+    backgroundColor: "#40395b",
+
+    justifyContent: "space-between",
+    width: "100%",
+    alignContent: "center",
+    alignItems: "center",
+    paddingTop: 100,
+    paddingHorizontal: 20,
+    paddingBottom: 10,
+  },
+  headerTitle1: {
+    fontSize: 80,
+    fontWeight: "900",
+    color: "#53b2df",
+    textAlign: "left",
+  },
+  headerTitle2: {
+    fontSize: 80,
+    fontWeight: "900",
+    color: "#f0857d",
+    textAlign: "center",
+  },
+  headerTitle3: {
+    fontSize: 80,
+    fontWeight: "900",
+    color: "#fff",
+    textAlign: "right",
   },
   title: {
     fontSize: 30,
@@ -39,17 +78,36 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   button: {
-    backgroundColor: "#007aff",
-    paddingVertical: 12,
+    backgroundColor: "#56b0e5",
+    paddingVertical: 20,
     paddingHorizontal: 20,
     borderRadius: 8,
     marginVertical: 10,
-    width: 200,
+    width: 320,
+    alignItems: "center",
+  },
+  button2: {
+    backgroundColor: "#ec647e",
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    marginVertical: 10,
+    width: 320,
+    alignItems: "center",
+  },
+  button3: {
+    width: 320,
+    backgroundColor: "#898dc2",
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    marginVertical: 10,
+
     alignItems: "center",
   },
   buttonText: {
     color: "#FFFFFF",
-    fontSize: 16,
+    fontSize: 30,
     fontWeight: "bold",
   },
 });

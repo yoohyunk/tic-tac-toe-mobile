@@ -1,86 +1,9 @@
-import { router, useLocalSearchParams } from "expo-router";
+import { router } from "expo-router";
 import React, { useState } from "react";
 import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
 // import { LinearGradient } from "expo-linear-gradient";
 
-const createBoard = (rows: number, cols: number): string[][] => {
-  return Array.from({ length: rows }, () => Array(cols).fill(""));
-};
-
-interface TicTacToeBoardProps {
-  rows?: number;
-  cols?: number;
-}
-
-const TicTacToeBoard = ({ rows = 4, cols = 4 }: TicTacToeBoardProps) => {
-  const [board, setBoard] = useState<string[][]>(() => createBoard(rows, cols));
-  const CELL_SIZE = 80;
-  const THICKNESS = 10;
-
-  const boardWidth = cols * CELL_SIZE;
-  const boardHeight = rows * CELL_SIZE;
-
-  const handleCellPress = (row: number, col: number) => {
-    const newBoard = board.map((r, rowIndex) =>
-      r.map((cell, colIndex) =>
-        rowIndex === row && colIndex === col ? "X" : cell
-      )
-    );
-    setBoard(newBoard);
-  };
-
-  const getCellColor = (rowIndex: number, colIndex: number) => {
-    return (rowIndex + colIndex) % 2 === 0 ? "#e4e3f0" : "#FFFFFF";
-  };
-
-  return (
-    <View
-      style={[
-        styles.boardContainer,
-        { width: boardWidth + THICKNESS, height: boardHeight + THICKNESS },
-      ]}
-    >
-      <View
-        style={[
-          styles.boardExtrude,
-          { width: boardWidth, height: boardHeight },
-        ]}
-      />
-
-      <View
-        style={[
-          styles.boardSurface,
-          { width: boardWidth, height: boardHeight },
-        ]}
-      >
-        {board.map((row, rowIndex) => (
-          <View key={rowIndex} style={styles.row}>
-            {row.map((cell, colIndex) => (
-              <TouchableOpacity
-                key={colIndex}
-                style={[
-                  styles.cell,
-                  { backgroundColor: getCellColor(rowIndex, colIndex) },
-                ]}
-                onPress={() => handleCellPress(rowIndex, colIndex)}
-              >
-                <Text style={styles.cellText}>{cell}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        ))}
-      </View>
-    </View>
-  );
-};
-
-interface GamePlayProps {
-  row: number;
-  col: number;
-}
-
-export default function GamePlay() {
-  const { row, col } = useLocalSearchParams();
+export default function preGameSettings() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -121,12 +44,37 @@ export default function GamePlay() {
             </View>
           </View>
         </View>
+        <View>
+          <TouchableOpacity
+            style={styles.button1}
+            onPress={() =>
+              router.push({ pathname: "/gamePlay", params: { row: 3, col: 3 } })
+            }
+          >
+            <Text style={styles.buttonText2}>3 x 3</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.button2}
+            onPress={() =>
+              router.push({ pathname: "/gamePlay", params: { row: 4, col: 4 } })
+            }
+          >
+            <Text style={styles.buttonText2}>4 x 4</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.button3}
+            onPress={() =>
+              router.push({ pathname: "/gamePlay", params: { row: 5, col: 5 } })
+            }
+          >
+            <Text style={styles.buttonText2}>5 x 5</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
 
-        <TicTacToeBoard rows={Number(row)} cols={Number(col)} />
-      </View>
-      <View style={styles.footer}>
+      {/* <View style={styles.footer}>
         <Text style={styles.footerText}>Points:3000</Text>
-      </View>
+      </View> */}
     </View>
   );
 }
@@ -148,6 +96,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    gap: 60,
   },
   footer: {
     backgroundColor: "#f0857d",
@@ -173,9 +122,7 @@ const styles = StyleSheet.create({
 
     color: "#FFFFFF",
   },
-  gradientBackground: {
-    flex: 1,
-  },
+
   container: {
     flex: 1,
     alignItems: "center",
@@ -256,40 +203,37 @@ const styles = StyleSheet.create({
     fontSize: 25,
     fontWeight: "bold",
   },
-  boardContainer: {
-    position: "relative",
-
-    transform: [{ perspective: 700 }, { rotateX: "35deg" }],
-  },
-  boardExtrude: {
-    position: "absolute",
-    top: 10,
-
-    backgroundColor: "#81619b",
-    borderRadius: 10,
-    zIndex: 0,
-  },
-  boardSurface: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    backgroundColor: "#FFF",
-    borderRadius: 10,
-    overflow: "hidden",
-    zIndex: 1,
-  },
-  row: {
-    flexDirection: "row",
-  },
-  cell: {
-    width: 80,
-    height: 80,
+  button1: {
+    backgroundColor: "#56b0e5",
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    marginVertical: 10,
+    width: 320,
     alignItems: "center",
-    justifyContent: "center",
   },
-  cellText: {
-    fontSize: 48,
-    fontWeight: "900",
-    color: "#e76679",
+  button2: {
+    backgroundColor: "#ec647e",
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    marginVertical: 10,
+    width: 320,
+    alignItems: "center",
+  },
+  button3: {
+    width: 320,
+    backgroundColor: "#898dc2",
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    marginVertical: 10,
+
+    alignItems: "center",
+  },
+  buttonText2: {
+    color: "#FFFFFF",
+    fontSize: 30,
+    fontWeight: "bold",
   },
 });
