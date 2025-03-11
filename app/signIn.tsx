@@ -1,11 +1,20 @@
-import { StyleSheet, Text, View, TouchableOpacity, TextInput } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  TextInput,
+  Button,
+} from "react-native";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import { useRouter } from "expo-router";
 
 const signInSchema = Yup.object().shape({
   email: Yup.string().email("Invalid email").required("Email is required"),
-  password: Yup.string().min(6, "At least six characters").required("Password is required"),
+  password: Yup.string()
+    .min(6, "At least six characters")
+    .required("Password is required"),
 });
 
 export default function SignIn() {
@@ -14,10 +23,9 @@ export default function SignIn() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.headerbutton} onPress={() => router.push("/")}>
-          <Text style={styles.headerbuttonText}>{"<"}</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Sign In</Text>
+        <Text style={styles.headerTitle1}>Tic{"      "}</Text>
+        <Text style={styles.headerTitle2}>Tac</Text>
+        <Text style={styles.headerTitle3}>{"      "}Toe</Text>
       </View>
 
       <Formik
@@ -29,29 +37,40 @@ export default function SignIn() {
         }}
       >
         {({ handleChange, handleBlur, handleSubmit, values, errors }) => (
-          <View>
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              onChangeText={handleChange("email")}
-              onBlur={handleBlur("email")}
-              value={values.email}
-            />
-            {errors.email && <Text style={styles.error}>{errors.email}</Text>}
+          <View style={styles.body}>
+            <View>
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                onChangeText={handleChange("email")}
+                onBlur={handleBlur("email")}
+                value={values.email}
+              />
+              {errors.email && <Text style={styles.error}>{errors.email}</Text>}
 
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              secureTextEntry={true}
-              onChangeText={handleChange("password")}
-              onBlur={handleBlur("password")}
-              value={values.password}
-            />
-            {errors.password && <Text style={styles.error}>{errors.password}</Text>}
-
-            <TouchableOpacity style={styles.button} onPress={()=>handleSubmit()}>
-              <Text style={styles.buttonText}>Sign in</Text>
-            </TouchableOpacity>
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                secureTextEntry={true}
+                onChangeText={handleChange("password")}
+                onBlur={handleBlur("password")}
+                value={values.password}
+              />
+              {errors.password && (
+                <Text style={styles.error}>{errors.password}</Text>
+              )}
+            </View>
+            <View style={styles.buttons}>
+              <TouchableOpacity
+                style={styles.button}
+                onPress={() => handleSubmit()}
+              >
+                <Text style={styles.buttonText}>Sign in</Text>
+              </TouchableOpacity>
+              <View style={styles.button2}>
+                <Text style={styles.buttonText}>sign in</Text>
+              </View>
+            </View>
           </View>
         )}
       </Formik>
@@ -66,38 +85,58 @@ export default function SignIn() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "space-between",
+    justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#b9badf",
-    paddingTop: 40,
+    backgroundColor: "#40395b",
+    gap: 20,
   },
   header: {
     backgroundColor: "#40395b",
-    flexDirection: "row",
+
     justifyContent: "space-between",
     width: "100%",
     alignContent: "center",
     alignItems: "center",
-    paddingTop: 45,
+    paddingTop: 100,
     paddingHorizontal: 20,
     paddingBottom: 10,
   },
-  headerTitle: {
-    fontSize: 25,
-    fontWeight: "600",
-    color: "#FFFFFF",
+  body: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 60,
+  },
+  headerTitle1: {
+    fontSize: 80,
+    fontWeight: "900",
+    color: "#53b2df",
+    textAlign: "left",
+  },
+  headerTitle2: {
+    fontSize: 80,
+    fontWeight: "900",
+    color: "#f0857d",
+    textAlign: "center",
+  },
+  headerTitle3: {
+    fontSize: 80,
+    fontWeight: "900",
+    color: "#fff",
+    textAlign: "right",
   },
   headerbutton: {
     alignItems: "center",
     padding: 10,
   },
   headerbuttonText: {
-    color:"#FFFFFF",
+    color: "#FFFFFF",
     fontSize: 25,
     fontWeight: "bold",
   },
   input: {
     width: 320,
+    height: 50,
     padding: 12,
     borderWidth: 2,
     borderColor: "#4c436c",
@@ -113,28 +152,41 @@ const styles = StyleSheet.create({
     marginVertical: 4,
     textAlign: "center",
   },
+  buttons: {
+    flex: 1,
+
+    gap: 20,
+  },
+
   button: {
-    backgroundColor: "#007aff",
+    backgroundColor: "#fcd45c",
     paddingVertical: 6,
     paddingHorizontal: 20,
     borderRadius: 8,
-    marginVertical: 10,
-    width: 130,
+
+    width: 320,
+    alignItems: "center",
+    alignSelf: "center",
+  },
+  button2: {
+    backgroundColor: "#898dc4",
+    paddingVertical: 6,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+
+    width: 320,
     alignItems: "center",
     alignSelf: "center",
   },
   buttonText: {
-    color:"#FFFFFF",
+    color: "#FFFFFF",
     fontSize: 25,
-    fontWeight: "bold",
   },
   footer: {
-    backgroundColor: "#f0857d",
-    width: "50%",
     height: 70,
     padding: 10,
-    borderTopRightRadius: 40,
-    borderTopLeftRadius: 40,
+
+    paddingBottom: 30,
     justifyContent: "center",
     alignItems: "center",
   },
