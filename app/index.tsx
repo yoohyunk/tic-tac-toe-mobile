@@ -3,7 +3,7 @@ import { useRouter } from "expo-router";
 import { useAuth } from "../contexts/AuthContext";
 
 import React, { useEffect } from "react";
-import SignIn from "../signIn";
+import SignIn from "./signIn";
 
 const index = () => {
   const router = useRouter();
