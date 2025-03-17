@@ -32,13 +32,77 @@ const createEmptyBoard = (size: number) => {
  * If a waiting room with the matching board size exists, joins it.
  * Otherwise, creates a new room.
  */
+
+// export const assignToRoom = async (userId: string, boardSize: number = 3) => {
+//   try {
+//     // Clamp boardSize to valid range
+//     const validBoardSize = Math.max(3, Math.min(boardSize, 5));
+
+//     const roomsRef = collection(firestore, "rooms");
+//     const roomQuery = query(roomsRef, where("status", "==", "waiting"));
+//     const roomSnapshot = await getDocs(roomQuery);
+
+//     let assignedRoomId: string;
+
+//     if (!roomSnapshot.empty) {
+//       // Find a waiting room with the same board size
+//       const availableRoom = roomSnapshot.docs.find((roomDoc) => {
+//         const roomData = roomDoc.data();
+//         return (
+//           Array.isArray(roomData.players) &&
+//           !roomData.players.includes(userId) &&
+//           roomData.boardSize === validBoardSize
+//         );
+//       });
+
+//       if (availableRoom) {
+//         assignedRoomId = availableRoom.id;
+//         const roomData = availableRoom.data();
+
+//         // Add the second player and update room status to full
+//         await updateDoc(doc(firestore, "rooms", assignedRoomId), {
+//           players: [...roomData.players, userId],
+//           status: "full",
+//         });
+
+//         console.log(`✅ User ${userId} joined room: ${assignedRoomId}`);
+//         return assignedRoomId;
+//       }
+//     }
+
+//     // Create a new room if no available room was found
+//     const newRoomRef = doc(collection(firestore, "rooms"));
+//     assignedRoomId = newRoomRef.id;
+
+//     await setDoc(newRoomRef, {
+//       players: [userId],
+//       board: createEmptyBoard(validBoardSize),
+//       boardSize: validBoardSize, // Store board size for later reference (e.g. win-check)
+//       turn: "X",
+//       status: "waiting",
+//     });
+
+//     console.log(`✅ New room created by ${userId}: ${assignedRoomId}`);
+//     return assignedRoomId;
+//   } catch (error) {
+//     console.error("❌ Error assigning room:", error);
+//     return null;
+//   }
+// };
+
+
 export const assignToRoom = async (userId: string, boardSize: number = 3) => {
   try {
     // Clamp boardSize to valid range
     const validBoardSize = Math.max(3, Math.min(boardSize, 5));
 
     const roomsRef = collection(firestore, "rooms");
-    const roomQuery = query(roomsRef, where("status", "==", "waiting"));
+    // Only look for non-invite rooms (inviteOnly: false)
+    const roomQuery = query(
+      roomsRef,
+      where("status", "==", "waiting"),
+      where("inviteOnly", "==", false)
+    );
     const roomSnapshot = await getDocs(roomQuery);
 
     let assignedRoomId: string;
@@ -69,16 +133,19 @@ export const assignToRoom = async (userId: string, boardSize: number = 3) => {
       }
     }
 
-    // Create a new room if no available room was found
+
+    // Create a new room (auto-match) if no available room was found.
+
     const newRoomRef = doc(collection(firestore, "rooms"));
     assignedRoomId = newRoomRef.id;
 
     await setDoc(newRoomRef, {
       players: [userId],
       board: createEmptyBoard(validBoardSize),
-      boardSize: validBoardSize, // Store board size for later reference (e.g. win-check)
+      boardSize: validBoardSize,
       turn: "X",
       status: "waiting",
+      inviteOnly: false, // This room is open for auto-match.
     });
 
     console.log(`✅ New room created by ${userId}: ${assignedRoomId}`);
@@ -88,6 +155,76 @@ export const assignToRoom = async (userId: string, boardSize: number = 3) => {
     return null;
   }
 };
+
+
+// invite room only
+
+export const createInviteRoom = async (
+  userId: string,
+  boardSize: number = 3
+) => {
+  try {
+    const validBoardSize = Math.max(3, Math.min(boardSize, 5));
+    const newRoomRef = doc(collection(firestore, "rooms"));
+    const roomId = newRoomRef.id;
+
+    await setDoc(newRoomRef, {
+      players: [userId],
+      board: createEmptyBoard(validBoardSize),
+      boardSize: validBoardSize,
+      turn: "X",
+      status: "waiting",
+      inviteOnly: true, // Mark as invite-only
+    });
+
+    console.log(`✅ Invite room created by ${userId}: ${roomId}`);
+    return roomId;
+  } catch (error) {
+    console.error("❌ Error creating invite room:", error);
+    return null;
+  }
+};
+
+export const joinRoomWithCode = async (userId: string, inviteCode: string) => {
+  try {
+    const roomRef = doc(firestore, "rooms", inviteCode);
+    const roomSnap = await getDoc(roomRef);
+
+    if (!roomSnap.exists()) {
+      console.warn("Room not found. Check your invitation code.");
+      return null;
+    }
+
+    const roomData = roomSnap.data();
+    // Ensure the room is marked as invite-only.
+    if (!roomData.inviteOnly) {
+      console.warn("This room is not invite-only. Please use auto-match.");
+      return null;
+    }
+
+    // Check if the user is already in the room.
+    if (Array.isArray(roomData.players) && roomData.players.includes(userId)) {
+      console.log("User already in the room.");
+      return inviteCode;
+    }
+
+    // Add the user to the room. For a two-player game, update the status.
+    const updatedPlayers = [...roomData.players, userId];
+    const newStatus = updatedPlayers.length === 2 ? "full" : "waiting";
+
+    await updateDoc(roomRef, {
+      players: updatedPlayers,
+      status: newStatus,
+    });
+
+    console.log(`✅ User ${userId} joined invite room: ${inviteCode}`);
+    return inviteCode;
+  } catch (error) {
+    console.error("Error joining room with code:", error);
+    return null;
+  }
+};
+
 
 /**
  * Syncs the game board in real time.
@@ -250,8 +387,20 @@ export const checkGameOver = async (roomId: string) => {
   const data = roomSnap.data();
   if (!data.board || !data.boardSize) return false;
 
+  console.log("Room inviteOnly flag:", data.inviteOnly);
+
   const winner = findWinner(data.board, data.boardSize);
   if (winner) {
+    if (data.inviteOnly) {
+      await updateDoc(roomRef, {
+        // players: [],
+        board: createEmptyBoard(data.boardSize),
+        turn: "X", // Reset turn to X
+        status: "waiting",
+      });
+      return winner;
+    }
+
     // Update the room status to "finished" in Firestore.
     await updateDoc(roomRef, { status: "finished" });
     console.log(`✅ Game Over! Winner: ${winner}`);

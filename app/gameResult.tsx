@@ -7,9 +7,14 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
+import { removeUserFromRoom } from "../firebase/roomManager";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function GameResult() {
   const { winner } = useLocalSearchParams<{ winner?: string }>();
+  const { type } = useLocalSearchParams<{ type?: string }>();
+  const { room } = useLocalSearchParams<{ room?: string }>();
+  const { user } = useAuth();
 
   return (
     <View style={styles.container}>
@@ -22,14 +27,41 @@ export default function GameResult() {
           : "No winner data found."}
       </Text>
       <View style={styles.buttons}>
-        <TouchableOpacity
-          onPress={() => router.push("/gamePlay")}
+        {type === "invite" ? (
+          <TouchableOpacity
+            onPress={() =>
+              router.push({
+                pathname: "/gamePlay",
+                params: { continue: room }, // 'room' is the invite room ID
+              })
+            }
+            style={styles.button}
+          >
+            <Text style={styles.buttonText}>Continue Game</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            onPress={() => router.push("/gamePlay")}
+            style={styles.button}
+          >
+            <Text style={styles.buttonText}>New Game</Text>
+          </TouchableOpacity>
+        )}
+
+        {/* <TouchableOpacity
+          onPress={() => router.push("/")}
           style={styles.button}
         >
-          <Text style={styles.buttonText}>New Game</Text>
-        </TouchableOpacity>
+          <Text style={styles.buttonText}>Back to Home</Text>
+        </TouchableOpacity> */}
         <TouchableOpacity
-          onPress={() => router.push("/")}
+          onPress={async () => {
+            if (room && user) {
+              await removeUserFromRoom(room, user.uid);
+            }
+            router.push("/");
+          }}
+
           style={styles.button}
         >
           <Text style={styles.buttonText}>Back to Home</Text>

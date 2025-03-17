@@ -12,10 +12,13 @@ import { useAuth } from "../contexts/AuthContext";
 import {
   assignToRoom,
   checkGameOver,
+  createInviteRoom,
+  joinRoomWithCode,
   removeUserFromRoom,
   syncGameBoard,
 } from "../firebase/roomManager";
 import TicTacToeBoard from "../components/TicTacToeBoard";
+import * as Clipboard from "expo-clipboard";
 
 export default function GamePlay() {
   const { user } = useAuth();
@@ -27,21 +30,45 @@ export default function GamePlay() {
   const [roomId, setRoomId] = useState<string | null>(null);
   const [turn, setTurn] = useState<string | null>("X");
   const [loading, setLoading] = useState(true);
-  // We expect players to be stored as objects, e.g., { uid: string, displayName: string }
+
   const [players, setPlayers] = useState<
     Array<{ uid: string; displayName: string }>
   >([]);
-  // Track room status and winner
   const [roomStatus, setRoomStatus] = useState<string>("waiting");
-  const [winner, setWinner] = useState<string | null>(null);
+  const [roomType, setRoomType] = useState<string | null>(null);
 
   // Assign user to a room and sync the game board
   useEffect(() => {
     if (user) {
       (async () => {
-        const assignedRoom = await assignToRoom(user.uid, boardSize);
-        setRoomId(assignedRoom);
+
+        let assignedRoom: string | null = null;
+        if (params.continue) {
+          // CONTINUING EXISTING GAME: Use the same room from params.continueRoom
+          assignedRoom = params.continue as string;
+          setRoomType("invite");
+        } else {
+          // NOT CONTINUING, HANDLE ROOM ASSIGNMENT
+          if (params.room) {
+            // JOIN EXISTING ROOM (invite mode)
+            setRoomType("invite");
+            assignedRoom = await joinRoomWithCode(
+              user.uid,
+              Array.isArray(params.room) ? params.room[0] : params.room
+            );
+          } else if (params.type === "invite") {
+            // CREATE INVITE-ONLY ROOM
+            setRoomType("invite");
+            assignedRoom = await createInviteRoom(user.uid, boardSize);
+          } else if (params.type === "random") {
+            // MATCH RANDOMLY
+            assignedRoom = await assignToRoom(user.uid, boardSize);
+          }
+        }
+
         if (assignedRoom) {
+          setRoomId(assignedRoom);
+
           syncGameBoard(
             assignedRoom,
             setBoard,
@@ -55,54 +82,97 @@ export default function GamePlay() {
         setLoading(false);
       })();
     }
-  }, [user, boardSize]);
+
+  }, [user, boardSize, params.room, params.type, params.continueRoom]);
+
+ 
 
   // Check if opponent has joined
   useEffect(() => {
     if (players.length === 2) {
-      // When two players are in the room, we're no longer loading (for game view)
+
       setLoading(false);
     }
   }, [players]);
 
   // Cleanup on component unmount
+  // useEffect(() => {
+  //   return () => {
+  //     if (roomId && user) {
+  //       removeUserFromRoom(roomId, user.uid);
+  //     }
+  //   };
+  // }, [roomId, user]);
   useEffect(() => {
     return () => {
+      // If we're continuing the game in an invite-only room, don't remove the user.
       if (roomId && user) {
-        removeUserFromRoom(roomId, user.uid);
+        if (!(roomType === "invite")) {
+          removeUserFromRoom(roomId, user.uid);
+        }
       }
     };
-  }, [roomId, user]);
+  }, [roomId, user, roomType, params.continue]);
 
-  // Remove user when app goes to background
+  // Remove user when app goes to background (with grace period for invite rooms)
   useEffect(() => {
-    const subscription = AppState.addEventListener("change", (nextAppState) => {
+    let timeoutId: NodeJS.Timeout | null = null;
+
+    const handleAppStateChange = (nextAppState: string) => {
       if (nextAppState === "background" && roomId && user) {
-        removeUserFromRoom(roomId, user.uid);
+        if (params.type === "invite") {
+          console.log("⏳ Invite room: giving 5 minutes grace period...");
+          timeoutId = setTimeout(() => {
+            removeUserFromRoom(roomId, user.uid);
+            console.log("❌ User removed after 5-minute grace period.");
+          }, 5 * 60 * 1000);
+        } else if (params.type === "random") {
+          console.log("⚡ Random match: removing immediately...");
+          removeUserFromRoom(roomId, user.uid);
+        }
+      } else if (nextAppState === "active") {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+          console.log("✅ User returned before timeout; removal canceled.");
+        }
       }
-    });
+    };
+
+    const subscription = AppState.addEventListener(
+      "change",
+      handleAppStateChange
+    );
     return () => {
       subscription.remove();
+      if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [roomId, user]);
+  }, [roomId, user, params.type]);
 
-  // Monitor roomStatus changes. When roomStatus is "finished", check winner and navigate.
+  // Monitor game over condition
+
   useEffect(() => {
     (async () => {
       if (roomId && Object.keys(board).length > 0) {
         const gameOver = await checkGameOver(roomId);
         if (gameOver) {
-          setWinner(gameOver);
           router.push({
             pathname: "/gameResult",
-            params: { winner: gameOver },
+            params: { winner: gameOver, type: roomType, room: roomId },
+
           });
         }
       }
     })();
   }, [roomId, board]);
 
-  // Determine current user nickname and opponent nickname (if joined)
+  const copyToClipboard = async () => {
+    if (roomId) {
+      await Clipboard.setStringAsync(roomId);
+      alert("Room code copied to clipboard!");
+    }
+  };
+
   const currentNickname = user?.displayName || "You";
   const opponentNickname =
     players.length === 2
@@ -127,7 +197,6 @@ export default function GamePlay() {
       {/* Body */}
       <View style={styles.body}>
         <View style={styles.profiles}>
-          {/* Current User Profile */}
           <View style={styles.profile}>
             <Text>{currentNickname}</Text>
             <View style={styles.profileImageContainer}>
@@ -139,7 +208,6 @@ export default function GamePlay() {
               </View>
             </View>
           </View>
-          {/* Opponent Profile */}
           <View style={styles.profile}>
             <Text>{opponentNickname}</Text>
             <View style={styles.profileImageContainer}>
@@ -153,9 +221,39 @@ export default function GamePlay() {
           </View>
         </View>
         {loading ? (
-          <ActivityIndicator size="large" color="#56b0e5" />
-        ) : !opponentNickname || players.length < 2 ? (
-          <Text style={styles.waitingText}>Waiting for an opponent...</Text>
+          roomType === "invite" && roomId ? (
+            <View style={styles.inviteContainer}>
+              <Text style={styles.inviteText}>Invite Code: {roomId}</Text>
+              <TouchableOpacity
+                style={styles.copyButton}
+                onPress={copyToClipboard}
+              >
+                <Text style={styles.copyButtonText}>Copy Code</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <Text style={styles.waitingText}>Setting up the game...</Text>
+          )
+        ) : players.length < 2 ? (
+          roomType === "invite" ? (
+            <View>
+              <View style={styles.inviteContainer}>
+                <Text style={styles.inviteText}>Invite Code: {roomId}</Text>
+                <TouchableOpacity
+                  style={styles.copyButton}
+                  onPress={copyToClipboard}
+                >
+                  <Text style={styles.copyButtonText}>Copy Code</Text>
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.waitingText}>
+                Waiting for your friend to join...
+              </Text>
+            </View>
+          ) : (
+            <Text style={styles.waitingText}>Waiting for an opponent...</Text>
+          )
+
         ) : (
           <>
             <TicTacToeBoard board={board} roomId={roomId!} userId={user!.uid} />
@@ -221,6 +319,7 @@ const styles = StyleSheet.create({
   profiles: {
     flexDirection: "row",
     justifyContent: "space-between",
+
     width: "100%",
     paddingHorizontal: 40,
     paddingVertical: 10,
@@ -297,5 +396,30 @@ const styles = StyleSheet.create({
     fontSize: 23,
     fontWeight: "600",
     textAlign: "center",
+  },
+  inviteContainer: {
+    alignItems: "center",
+    marginBottom: 20,
+    backgroundColor: "#40395b",
+    padding: 10,
+    borderRadius: 10,
+  },
+  inviteText: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  copyButton: {
+    backgroundColor: "#ec647e",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+  },
+  copyButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "bold",
+
   },
 });
