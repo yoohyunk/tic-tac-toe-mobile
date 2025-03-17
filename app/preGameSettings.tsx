@@ -1,9 +1,26 @@
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
+import {
+  View,
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+  TextInput,
+} from "react-native";
 // import { LinearGradient } from "expo-linear-gradient";
 
 export default function preGameSettings() {
+  // const [rows, setRows] = useState(3);
+  // const [cols, setCols] = useState(3);
+  const [inviteCode, setInviteCode] = useState("");
+
+  const handleJoinRoom = () => {
+    // Only navigate if inviteCode is not empty
+    if (inviteCode.trim() !== "") {
+      router.push({ pathname: "/gamePlay", params: { room: inviteCode } });
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -44,30 +61,74 @@ export default function preGameSettings() {
             </View>
           </View>
         </View>
-        <View>
+        {/* <View>
           <TouchableOpacity
             style={styles.button1}
-            onPress={() =>
-              router.push({ pathname: "/gamePlay", params: { row: 3, col: 3 } })
-            }
+            onPress={() => {
+              setCols(3);
+              setRows(3);
+            }}
           >
             <Text style={styles.buttonText2}>3 x 3</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.button2}
-            onPress={() =>
-              router.push({ pathname: "/gamePlay", params: { row: 4, col: 4 } })
-            }
+            onPress={() => {
+              setCols(4);
+              setRows(4);
+            }}
           >
             <Text style={styles.buttonText2}>4 x 4</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.button3}
-            onPress={() =>
-              router.push({ pathname: "/gamePlay", params: { row: 5, col: 5 } })
-            }
+            onPress={() => {
+              setCols(5);
+              setRows(5);
+            }}
           >
             <Text style={styles.buttonText2}>5 x 5</Text>
+          </TouchableOpacity>
+        </View> */}
+
+        <View>
+          <TouchableOpacity
+            style={styles.button1}
+            onPress={() =>
+              router.push({
+                pathname: "/boardSelection",
+                params: { type: "random" },
+              })
+            }
+          >
+            <Text style={styles.buttonText2}>Play with random user</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.button1}
+            onPress={() =>
+              router.push({
+                pathname: "/boardSelection",
+                params: { type: "invite" },
+              })
+            }
+          >
+            <Text style={styles.buttonText2}>create new room</Text>
+          </TouchableOpacity>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter invitation code"
+            value={inviteCode}
+            onChangeText={setInviteCode}
+          />
+          <TouchableOpacity
+            style={[
+              styles.button1,
+              inviteCode.trim() === "" && styles.buttonDisabled,
+            ]}
+            onPress={handleJoinRoom}
+            disabled={inviteCode.trim() === ""}
+          >
+            <Text style={styles.buttonText2}>join the room with code</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -235,5 +296,17 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 30,
     fontWeight: "bold",
+  },
+  input: {
+    width: 320,
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    marginVertical: 10,
+    alignItems: "center",
+  },
+  buttonDisabled: {
+    backgroundColor: "#ccc",
   },
 });
