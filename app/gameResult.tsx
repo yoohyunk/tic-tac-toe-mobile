@@ -15,6 +15,7 @@ export default function GameResult() {
   const { type } = useLocalSearchParams<{ type?: string }>();
   const { room } = useLocalSearchParams<{ room?: string }>();
   const { user } = useAuth();
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Game Over</Text>
@@ -60,6 +61,7 @@ export default function GameResult() {
             }
             router.push("/");
           }}
+
           style={styles.button}
         >
           <Text style={styles.buttonText}>Back to Home</Text>

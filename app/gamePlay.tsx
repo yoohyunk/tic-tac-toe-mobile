@@ -30,15 +30,18 @@ export default function GamePlay() {
   const [roomId, setRoomId] = useState<string | null>(null);
   const [turn, setTurn] = useState<string | null>("X");
   const [loading, setLoading] = useState(true);
+
   const [players, setPlayers] = useState<
     Array<{ uid: string; displayName: string }>
   >([]);
   const [roomStatus, setRoomStatus] = useState<string>("waiting");
   const [roomType, setRoomType] = useState<string | null>(null);
 
+  // Assign user to a room and sync the game board
   useEffect(() => {
     if (user) {
       (async () => {
+
         let assignedRoom: string | null = null;
         if (params.continue) {
           // CONTINUING EXISTING GAME: Use the same room from params.continueRoom
@@ -65,6 +68,7 @@ export default function GamePlay() {
 
         if (assignedRoom) {
           setRoomId(assignedRoom);
+
           syncGameBoard(
             assignedRoom,
             setBoard,
@@ -78,11 +82,15 @@ export default function GamePlay() {
         setLoading(false);
       })();
     }
+
   }, [user, boardSize, params.room, params.type, params.continueRoom]);
+
+ 
 
   // Check if opponent has joined
   useEffect(() => {
     if (players.length === 2) {
+
       setLoading(false);
     }
   }, [players]);
@@ -142,6 +150,7 @@ export default function GamePlay() {
   }, [roomId, user, params.type]);
 
   // Monitor game over condition
+
   useEffect(() => {
     (async () => {
       if (roomId && Object.keys(board).length > 0) {
@@ -150,6 +159,7 @@ export default function GamePlay() {
           router.push({
             pathname: "/gameResult",
             params: { winner: gameOver, type: roomType, room: roomId },
+
           });
         }
       }
@@ -243,6 +253,7 @@ export default function GamePlay() {
           ) : (
             <Text style={styles.waitingText}>Waiting for an opponent...</Text>
           )
+
         ) : (
           <>
             <TicTacToeBoard board={board} roomId={roomId!} userId={user!.uid} />
@@ -308,6 +319,7 @@ const styles = StyleSheet.create({
   profiles: {
     flexDirection: "row",
     justifyContent: "space-between",
+
     width: "100%",
     paddingHorizontal: 40,
     paddingVertical: 10,
@@ -408,5 +420,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "bold",
+
   },
 });

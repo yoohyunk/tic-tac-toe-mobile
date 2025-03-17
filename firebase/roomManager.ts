@@ -32,6 +32,7 @@ const createEmptyBoard = (size: number) => {
  * If a waiting room with the matching board size exists, joins it.
  * Otherwise, creates a new room.
  */
+
 // export const assignToRoom = async (userId: string, boardSize: number = 3) => {
 //   try {
 //     // Clamp boardSize to valid range
@@ -89,6 +90,7 @@ const createEmptyBoard = (size: number) => {
 //   }
 // };
 
+
 export const assignToRoom = async (userId: string, boardSize: number = 3) => {
   try {
     // Clamp boardSize to valid range
@@ -131,7 +133,9 @@ export const assignToRoom = async (userId: string, boardSize: number = 3) => {
       }
     }
 
+
     // Create a new room (auto-match) if no available room was found.
+
     const newRoomRef = doc(collection(firestore, "rooms"));
     assignedRoomId = newRoomRef.id;
 
@@ -151,6 +155,7 @@ export const assignToRoom = async (userId: string, boardSize: number = 3) => {
     return null;
   }
 };
+
 
 // invite room only
 
@@ -219,6 +224,7 @@ export const joinRoomWithCode = async (userId: string, inviteCode: string) => {
     return null;
   }
 };
+
 
 /**
  * Syncs the game board in real time.
@@ -380,6 +386,7 @@ export const checkGameOver = async (roomId: string) => {
   if (!roomSnap.exists()) return false;
   const data = roomSnap.data();
   if (!data.board || !data.boardSize) return false;
+
   console.log("Room inviteOnly flag:", data.inviteOnly);
 
   const winner = findWinner(data.board, data.boardSize);
@@ -393,6 +400,7 @@ export const checkGameOver = async (roomId: string) => {
       });
       return winner;
     }
+
     // Update the room status to "finished" in Firestore.
     await updateDoc(roomRef, { status: "finished" });
     console.log(`✅ Game Over! Winner: ${winner}`);
