@@ -90,7 +90,6 @@ const createEmptyBoard = (size: number) => {
 //   }
 // };
 
-
 export const assignToRoom = async (userId: string, boardSize: number = 3) => {
   try {
     // Clamp boardSize to valid range
@@ -133,7 +132,6 @@ export const assignToRoom = async (userId: string, boardSize: number = 3) => {
       }
     }
 
-
     // Create a new room (auto-match) if no available room was found.
 
     const newRoomRef = doc(collection(firestore, "rooms"));
@@ -155,7 +153,6 @@ export const assignToRoom = async (userId: string, boardSize: number = 3) => {
     return null;
   }
 };
-
 
 // invite room only
 
@@ -225,7 +222,6 @@ export const joinRoomWithCode = async (userId: string, inviteCode: string) => {
   }
 };
 
-
 /**
  * Syncs the game board in real time.
  */
@@ -233,7 +229,8 @@ export const syncGameBoard = (
   roomId: string,
   setBoard: Function,
   setTurn: Function,
-  setPlayersAndStatus: Function
+  setPlayersAndStatus: Function,
+  setRoomBoardSize?: Function
 ) => {
   const roomRef = doc(firestore, "rooms", roomId);
   return onSnapshot(roomRef, (snapshot) => {
@@ -241,8 +238,11 @@ export const syncGameBoard = (
       const data = snapshot.data();
       setBoard(data.board || {});
       setTurn(data.turn || "X");
-      // Pass both players and status
       setPlayersAndStatus(data.players || [], data.status || "waiting");
+      // If a callback is provided, update the board size from Firestore
+      if (setRoomBoardSize && data.boardSize) {
+        setRoomBoardSize(data.boardSize);
+      }
     }
   });
 };
@@ -429,10 +429,12 @@ export const removeUserFromRoom = async (roomId: string, userId: string) => {
     const data = roomSnap.data();
     if (!Array.isArray(data.players)) return;
 
-    // Remove the user from the players array
     const updatedPlayers = data.players.filter(
       (player: string) => player !== userId
     );
+    // const updatedPlayers = data.players.filter(
+    //   (player: { uid: string }) => player.uid !== userId
+    // );
 
     // If no players remain, delete the room; otherwise update the room
     if (updatedPlayers.length === 0) {

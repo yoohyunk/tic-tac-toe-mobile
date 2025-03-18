@@ -1,13 +1,21 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { TouchableOpacity, View, Text, StyleSheet } from "react-native";
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 
 export default function BoardSelection() {
   const params = useLocalSearchParams();
   const router = useRouter();
 
   return (
-    <View>
+    <View style={styles.container}>
+      <TouchableOpacity
+        style={styles.backToHome}
+        onPress={() => router.push("/preGameSettings")}
+      >
+        <FontAwesome6 name="arrow-alt-circle-left" size={45} color="#fff" />
+      </TouchableOpacity>
+      <Text style={styles.buttonText}>Select Board Size</Text>
       <TouchableOpacity
         style={styles.button1}
         onPress={() => {
@@ -46,6 +54,26 @@ export default function BoardSelection() {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    // flex: 1,
+    // backgroundColor: "#b9badf",
+    // alignItems: "center",
+    // justifyContent: "space-between",
+    // height: "100%",
+    // padding: 50,
+    // zIndex: -1,
+
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#40395b",
+    gap: 20,
+  },
+  backToHome: {
+    position: "absolute",
+    top: 50,
+    left: 20,
+  },
   buttonText: {
     color: "#FFFFFF",
     fontSize: 25,
