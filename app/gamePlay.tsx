@@ -23,13 +23,14 @@ import * as Clipboard from "expo-clipboard";
 export default function GamePlay() {
   const { user } = useAuth();
   const params = useLocalSearchParams();
-  const boardSize = params.row ? Number(params.row) : 3;
+  const initialBoardSize = params.row ? Number(params.row) : 3;
 
   // Firebase game state
   const [board, setBoard] = useState<{ [key: string]: string }>({});
   const [roomId, setRoomId] = useState<string | null>(null);
   const [turn, setTurn] = useState<string | null>("X");
   const [loading, setLoading] = useState(true);
+  const [boardSize, setBoardSize] = useState<number>(initialBoardSize);
 
   const [players, setPlayers] = useState<
     Array<{ uid: string; displayName: string }>
@@ -41,7 +42,6 @@ export default function GamePlay() {
   useEffect(() => {
     if (user) {
       (async () => {
-
         let assignedRoom: string | null = null;
         if (params.continue) {
           // CONTINUING EXISTING GAME: Use the same room from params.continueRoom
@@ -76,21 +76,18 @@ export default function GamePlay() {
             (playersArray: any, status: string) => {
               setPlayers(playersArray);
               setRoomStatus(status);
-            }
+            },
+            setBoardSize
           );
         }
         setLoading(false);
       })();
     }
-
   }, [user, boardSize, params.room, params.type, params.continueRoom]);
-
- 
 
   // Check if opponent has joined
   useEffect(() => {
     if (players.length === 2) {
-
       setLoading(false);
     }
   }, [players]);
@@ -159,7 +156,6 @@ export default function GamePlay() {
           router.push({
             pathname: "/gameResult",
             params: { winner: gameOver, type: roomType, room: roomId },
-
           });
         }
       }
@@ -185,7 +181,12 @@ export default function GamePlay() {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.button}
-          onPress={() => router.push("/")}
+          onPress={async () => {
+            if (roomId && user) {
+              await removeUserFromRoom(roomId, user.uid);
+            }
+            router.push("/");
+          }}
         >
           <Text style={styles.buttonText}>{"<"}</Text>
         </TouchableOpacity>
@@ -253,10 +254,15 @@ export default function GamePlay() {
           ) : (
             <Text style={styles.waitingText}>Waiting for an opponent...</Text>
           )
-
         ) : (
           <>
-            <TicTacToeBoard board={board} roomId={roomId!} userId={user!.uid} />
+            <TicTacToeBoard
+              board={board}
+              roomId={roomId!}
+              userId={user!.uid}
+              rows={boardSize}
+              cols={boardSize}
+            />
             <Text style={styles.footerText}>
               {turn === "X"
                 ? `${currentNickname}'s Turn`
@@ -420,6 +426,5 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "bold",
-
   },
 });
