@@ -54,3 +54,5 @@ yarn.lock
 # Firebase Firestore rules and indexes (optional)
 firestore.rules.bkp
 firestore.indexes.json.bkp
+
+serviceAccountKey.json
