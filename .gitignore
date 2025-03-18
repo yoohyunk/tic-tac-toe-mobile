@@ -56,3 +56,6 @@ firestore.rules.bkp
 firestore.indexes.json.bkp
 
 serviceAccountKey.json
+
+.vscode/
+.idea/
