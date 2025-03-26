@@ -27,72 +27,8 @@ const createEmptyBoard = (size: number) => {
   return boardObject;
 };
 
-/**
- * Assigns a user to a game room with a given board size.
- * If a waiting room with the matching board size exists, joins it.
- * Otherwise, creates a new room.
- */
-
-// export const assignToRoom = async (userId: string, boardSize: number = 3) => {
-//   try {
-//     // Clamp boardSize to valid range
-//     const validBoardSize = Math.max(3, Math.min(boardSize, 5));
-
-//     const roomsRef = collection(firestore, "rooms");
-//     const roomQuery = query(roomsRef, where("status", "==", "waiting"));
-//     const roomSnapshot = await getDocs(roomQuery);
-
-//     let assignedRoomId: string;
-
-//     if (!roomSnapshot.empty) {
-//       // Find a waiting room with the same board size
-//       const availableRoom = roomSnapshot.docs.find((roomDoc) => {
-//         const roomData = roomDoc.data();
-//         return (
-//           Array.isArray(roomData.players) &&
-//           !roomData.players.includes(userId) &&
-//           roomData.boardSize === validBoardSize
-//         );
-//       });
-
-//       if (availableRoom) {
-//         assignedRoomId = availableRoom.id;
-//         const roomData = availableRoom.data();
-
-//         // Add the second player and update room status to full
-//         await updateDoc(doc(firestore, "rooms", assignedRoomId), {
-//           players: [...roomData.players, userId],
-//           status: "full",
-//         });
-
-//         console.log(`✅ User ${userId} joined room: ${assignedRoomId}`);
-//         return assignedRoomId;
-//       }
-//     }
-
-//     // Create a new room if no available room was found
-//     const newRoomRef = doc(collection(firestore, "rooms"));
-//     assignedRoomId = newRoomRef.id;
-
-//     await setDoc(newRoomRef, {
-//       players: [userId],
-//       board: createEmptyBoard(validBoardSize),
-//       boardSize: validBoardSize, // Store board size for later reference (e.g. win-check)
-//       turn: "X",
-//       status: "waiting",
-//     });
-
-//     console.log(`✅ New room created by ${userId}: ${assignedRoomId}`);
-//     return assignedRoomId;
-//   } catch (error) {
-//     console.error("❌ Error assigning room:", error);
-//     return null;
-//   }
-// };
-
 export const assignToRoom = async (userId: string, boardSize: number = 3) => {
   try {
-    // Clamp boardSize to valid range
     const validBoardSize = Math.max(3, Math.min(boardSize, 5));
 
     const roomsRef = collection(firestore, "rooms");
@@ -152,6 +88,30 @@ export const assignToRoom = async (userId: string, boardSize: number = 3) => {
     console.error("❌ Error assigning room:", error);
     return null;
   }
+};
+
+export const assignToAIBoard = async (
+  userId: string,
+  boardSize: number,
+  aiLevel: "easy" | "hard" = "easy"
+) => {
+  const validBoardSize = Math.max(3, Math.min(boardSize, 5));
+  const newRoomRef = doc(collection(firestore, "rooms"));
+  const roomId = newRoomRef.id;
+
+  await setDoc(newRoomRef, {
+    players: [userId, "AI"],
+    board: createEmptyBoard(validBoardSize),
+    boardSize: validBoardSize,
+    turn: "X",
+    status: "playing",
+    inviteOnly: false,
+    isAIMode: true,
+    aiLevel,
+  });
+
+  console.log(`🤖 AI Room created by ${userId}: ${roomId}`);
+  return roomId;
 };
 
 // invite room only
@@ -364,21 +324,6 @@ export const findWinner = (
  * Checks if the game is over by evaluating rows, columns, and diagonals.
  * The logic adapts dynamically to boards sized from 3×3 up to 5×5.
  */
-// export const checkGameOver = async (roomId: string) => {
-//   const roomRef = doc(firestore, "rooms", roomId);
-//   const roomSnap = await getDoc(roomRef);
-
-//   if (!roomSnap.exists()) return false;
-//   const data = roomSnap.data();
-//   if (!data.board || !data.boardSize) return false;
-
-//   const winner = findWinner(data.board, data.boardSize);
-//   if (winner) {
-//     console.log(`✅ Game Over! Winner: ${winner}`);
-//   }
-//   return winner;
-// };
-
 export const checkGameOver = async (roomId: string) => {
   const roomRef = doc(firestore, "rooms", roomId);
   const roomSnap = await getDoc(roomRef);
@@ -432,9 +377,6 @@ export const removeUserFromRoom = async (roomId: string, userId: string) => {
     const updatedPlayers = data.players.filter(
       (player: string) => player !== userId
     );
-    // const updatedPlayers = data.players.filter(
-    //   (player: { uid: string }) => player.uid !== userId
-    // );
 
     // If no players remain, delete the room; otherwise update the room
     if (updatedPlayers.length === 0) {

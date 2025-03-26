@@ -10,22 +10,28 @@ import {
 import { useLocalSearchParams, router } from "expo-router";
 import { useAuth } from "../contexts/AuthContext";
 import {
+  assignToAIBoard,
   assignToRoom,
   checkGameOver,
   createInviteRoom,
+  handlePlayerMove,
   joinRoomWithCode,
   removeUserFromRoom,
   syncGameBoard,
 } from "../firebase/roomManager";
 import TicTacToeBoard from "../components/TicTacToeBoard";
 import * as Clipboard from "expo-clipboard";
+import { getEasyMove } from "../utils/easyBot";
+import { getHardMove } from "../utils/hardBot";
+import { convertBoardObjectToArray } from "../utils/helper";
 
 export default function GamePlay() {
   const { user } = useAuth();
   const params = useLocalSearchParams();
   const initialBoardSize = params.row ? Number(params.row) : 3;
+  const isAIMode = params.type === "easy" || params.type === "hard";
+  const aiLevel = params.type === "hard" ? "hard" : "easy";
 
-  // Firebase game state
   const [board, setBoard] = useState<{ [key: string]: string }>({});
   const [roomId, setRoomId] = useState<string | null>(null);
   const [turn, setTurn] = useState<string | null>("X");
@@ -35,6 +41,11 @@ export default function GamePlay() {
   const [players, setPlayers] = useState<
     Array<{ uid: string; displayName: string }>
   >([]);
+  const playerSymbol = isAIMode
+    ? "X"
+    : players.length === 2 && players[0].uid === user?.uid
+    ? "X"
+    : "O";
   const [roomStatus, setRoomStatus] = useState<string>("waiting");
   const [roomType, setRoomType] = useState<string | null>(null);
 
@@ -57,12 +68,19 @@ export default function GamePlay() {
             assignedRoom = await createInviteRoom(user.uid, boardSize);
           } else if (params.type === "random") {
             assignedRoom = await assignToRoom(user.uid, boardSize);
+          } else if (isAIMode) {
+            assignedRoom = await assignToAIBoard(user.uid, boardSize, aiLevel);
+            setRoomType("ai");
+            setPlayers([
+              { uid: user.uid, displayName: user.displayName || "Player" },
+              { uid: "AI", displayName: "AI" },
+            ]);
+            setRoomStatus("playing");
           }
         }
 
         if (assignedRoom) {
           setRoomId(assignedRoom);
-
           syncGameBoard(
             assignedRoom,
             setBoard,
@@ -73,14 +91,14 @@ export default function GamePlay() {
             },
             setBoardSize
           );
+          setLoading(false);
         }
-        setLoading(false);
       })();
     }
   }, [user, boardSize, params.room, params.type, params.continueRoom]);
 
   useEffect(() => {
-    if (players.length === 2) {
+    if (!isAIMode && players.length === 2) {
       setLoading(false);
     }
   }, [players]);
@@ -88,7 +106,7 @@ export default function GamePlay() {
   useEffect(() => {
     return () => {
       if (roomId && user) {
-        if (roomType !== "invite") {
+        if (!isAIMode && roomType !== "invite") {
           removeUserFromRoom(roomId, user.uid);
         }
       }
@@ -96,37 +114,33 @@ export default function GamePlay() {
   }, [roomId, user, roomType, params.continue]);
 
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout | null = null;
+    if (!isAIMode) {
+      let timeoutId: NodeJS.Timeout | null = null;
 
-    const handleAppStateChange = (nextAppState: string) => {
-      if (nextAppState === "background" && roomId && user) {
-        if (params.type === "invite") {
-          console.log("⏳ Invite room: giving 5 minutes grace period...");
-          timeoutId = setTimeout(() => {
+      const handleAppStateChange = (nextAppState: string) => {
+        if (nextAppState === "background" && roomId && user) {
+          if (params.type === "invite") {
+            timeoutId = setTimeout(() => {
+              removeUserFromRoom(roomId, user.uid);
+            }, 5 * 60 * 1000);
+          } else if (params.type === "random") {
             removeUserFromRoom(roomId, user.uid);
-            console.log("❌ User removed after 5-minute grace period.");
-          }, 5 * 60 * 1000);
-        } else if (params.type === "random") {
-          console.log("⚡ Random match: removing immediately...");
-          removeUserFromRoom(roomId, user.uid);
-        }
-      } else if (nextAppState === "active") {
-        if (timeoutId) {
+          }
+        } else if (nextAppState === "active" && timeoutId) {
           clearTimeout(timeoutId);
           timeoutId = null;
-          console.log("✅ User returned before timeout; removal canceled.");
         }
-      }
-    };
+      };
 
-    const subscription = AppState.addEventListener(
-      "change",
-      handleAppStateChange
-    );
-    return () => {
-      subscription.remove();
-      if (timeoutId) clearTimeout(timeoutId);
-    };
+      const subscription = AppState.addEventListener(
+        "change",
+        handleAppStateChange
+      );
+      return () => {
+        subscription.remove();
+        if (timeoutId) clearTimeout(timeoutId);
+      };
+    }
   }, [roomId, user, params.type]);
 
   useEffect(() => {
@@ -148,6 +162,33 @@ export default function GamePlay() {
     })();
   }, [roomId, board]);
 
+  useEffect(() => {
+    if (
+      isAIMode &&
+      turn === "O" &&
+      board &&
+      Object.keys(board).length > 0 &&
+      user &&
+      roomId
+    ) {
+      const runAIMove = async () => {
+        const flatBoard = convertBoardObjectToArray(board, boardSize);
+        const aiMoveIndex =
+          aiLevel === "easy"
+            ? getEasyMove(flatBoard)
+            : getHardMove(flatBoard, boardSize, "O");
+
+        const row = Math.floor(aiMoveIndex / boardSize);
+        const col = aiMoveIndex % boardSize;
+
+        await handlePlayerMove(roomId, "AI", row, col);
+      };
+
+      const timer = setTimeout(runAIMove, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [turn, board, user, roomId]);
+
   const copyToClipboard = async () => {
     if (roomId) {
       await Clipboard.setStringAsync(roomId);
@@ -155,6 +196,13 @@ export default function GamePlay() {
     }
   };
 
+  // const handleMove = async (row: number, col: number) => {
+  //   const cellKey = `${row}_${col}`;
+  //   if (turn === playerSymbol && board[cellKey] === "") {
+  //     // 사람 플레이어인 경우 실제 user.uid를 전달합니다.
+  //     await handlePlayerMove(roomId!, user.uid, row, col);
+  //   }
+  // };
   const currentNickname = user?.displayName || "You";
   const opponentNickname =
     players.length === 2
@@ -248,6 +296,7 @@ export default function GamePlay() {
               userId={user!.uid}
               rows={boardSize}
               cols={boardSize}
+              // onCellPress={handleMove}
             />
             <Text style={styles.footerText}>
               {turn === "X"

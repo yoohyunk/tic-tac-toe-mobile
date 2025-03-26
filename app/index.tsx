@@ -3,7 +3,6 @@ import { useRouter } from "expo-router";
 import { useAuth } from "../contexts/AuthContext";
 
 import React, { useEffect } from "react";
-import SignIn from "./signIn";
 
 const index = () => {
   const router = useRouter();
@@ -25,7 +24,12 @@ const index = () => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.button2}
-          onPress={() => router.push("/preGameSettings")}
+          onPress={() =>
+            router.push({
+              pathname: "/gameLevelSelection",
+              // params: { type: "singlePlayer" },
+            })
+          }
         >
           <Text style={styles.buttonText}>SINGLEPLAYER</Text>
         </TouchableOpacity>
@@ -43,7 +47,7 @@ const index = () => {
             }
           }}
         >
-          <Text style={styles.buttonText}>SIGN IN</Text>
+          <Text style={styles.buttonText}>LOG OUT</Text>
         </TouchableOpacity>
       </View>
     </View>
