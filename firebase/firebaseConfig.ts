@@ -7,13 +7,13 @@ import { getReactNativePersistence } from "firebase/auth"; // Correct import
 
 // Replace the following with your own Firebase project configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyDSJTJKuhp_HeUqRzcD5DJbkHQyLpsnDXQ",
-  authDomain: "tictactoeapp-5fb1a.firebaseapp.com",
-  projectId: "tictactoeapp-5fb1a",
-  storageBucket: "tictactoeapp-5fb1a.firebasestorage.app",
-  messagingSenderId: "536889922375",
-  appId: "1:536889922375:web:a469a13b7f8964d752b262",
-  measurementId: "G-CR9VT33JGC",
+  apiKey: process.env.FIREBASE_API_KEY,
+  authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.FIREBASE_PROJECT_ID,
+  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.FIREBASE_APP_ID,
+  measurementId: process.env.FIREBASE_MEASUREMENT_ID,
 };
 
 const app = initializeApp(firebaseConfig);
