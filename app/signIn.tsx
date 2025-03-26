@@ -10,7 +10,7 @@ import {
 import { Formik } from "formik";
 import * as Yup from "yup";
 import { useRouter } from "expo-router";
-import { useAuth } from "../contexts/AuthContext"; // Use the global auth context
+import { useAuth } from "../contexts/AuthContext";
 
 const signInSchema = Yup.object().shape({
   email: Yup.string().email("Invalid email").required("Email is required"),
@@ -21,7 +21,7 @@ const signInSchema = Yup.object().shape({
 
 export default function SignIn() {
   const router = useRouter();
-  const { login } = useAuth(); // Get login function from context
+  const { login } = useAuth();
 
   return (
     <View style={styles.container}>

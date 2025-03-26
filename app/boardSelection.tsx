@@ -55,14 +55,6 @@ export default function BoardSelection() {
 
 const styles = StyleSheet.create({
   container: {
-    // flex: 1,
-    // backgroundColor: "#b9badf",
-    // alignItems: "center",
-    // justifyContent: "space-between",
-    // height: "100%",
-    // padding: 50,
-    // zIndex: -1,
-
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
