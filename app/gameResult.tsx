@@ -15,6 +15,8 @@ export default function GameResult() {
   const { type } = useLocalSearchParams<{ type?: string }>();
   const { room } = useLocalSearchParams<{ room?: string }>();
   const { user } = useAuth();
+  const { row } = useLocalSearchParams<{ row?: string }>();
+  const rowNumber = row !== undefined ? Number(row) : undefined;
 
   return (
     <View style={styles.container}>
@@ -41,19 +43,17 @@ export default function GameResult() {
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
-            onPress={() => router.push("/gamePlay")}
             style={styles.button}
+            onPress={() => {
+              router.push({
+                pathname: "/gamePlay",
+                params: { row: rowNumber, type: type },
+              });
+            }}
           >
             <Text style={styles.buttonText}>New Game</Text>
           </TouchableOpacity>
         )}
-
-        {/* <TouchableOpacity
-          onPress={() => router.push("/")}
-          style={styles.button}
-        >
-          <Text style={styles.buttonText}>Back to Home</Text>
-        </TouchableOpacity> */}
         <TouchableOpacity
           onPress={async () => {
             if (room && user) {
@@ -61,7 +61,6 @@ export default function GameResult() {
             }
             router.push("/");
           }}
-
           style={styles.button}
         >
           <Text style={styles.buttonText}>Back to Home</Text>

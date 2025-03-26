@@ -59,3 +59,4 @@ serviceAccountKey.json
 
 .vscode/
 .idea/
+firebase/google-services.json

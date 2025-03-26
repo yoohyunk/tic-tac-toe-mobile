@@ -12,12 +12,9 @@ import {
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 
 export default function preGameSettings() {
-  // const [rows, setRows] = useState(3);
-  // const [cols, setCols] = useState(3);
   const [inviteCode, setInviteCode] = useState("");
 
   const handleJoinRoom = () => {
-    // Only navigate if inviteCode is not empty
     if (inviteCode.trim() !== "") {
       router.push({ pathname: "/gamePlay", params: { room: inviteCode } });
     }

@@ -38,30 +38,24 @@ export default function GamePlay() {
   const [roomStatus, setRoomStatus] = useState<string>("waiting");
   const [roomType, setRoomType] = useState<string | null>(null);
 
-  // Assign user to a room and sync the game board
   useEffect(() => {
     if (user) {
       (async () => {
         let assignedRoom: string | null = null;
         if (params.continue) {
-          // CONTINUING EXISTING GAME: Use the same room from params.continueRoom
           assignedRoom = params.continue as string;
           setRoomType("invite");
         } else {
-          // NOT CONTINUING, HANDLE ROOM ASSIGNMENT
           if (params.room) {
-            // JOIN EXISTING ROOM (invite mode)
             setRoomType("invite");
             assignedRoom = await joinRoomWithCode(
               user.uid,
               Array.isArray(params.room) ? params.room[0] : params.room
             );
           } else if (params.type === "invite") {
-            // CREATE INVITE-ONLY ROOM
             setRoomType("invite");
             assignedRoom = await createInviteRoom(user.uid, boardSize);
           } else if (params.type === "random") {
-            // MATCH RANDOMLY
             assignedRoom = await assignToRoom(user.uid, boardSize);
           }
         }
@@ -85,33 +79,22 @@ export default function GamePlay() {
     }
   }, [user, boardSize, params.room, params.type, params.continueRoom]);
 
-  // Check if opponent has joined
   useEffect(() => {
     if (players.length === 2) {
       setLoading(false);
     }
   }, [players]);
 
-  // Cleanup on component unmount
-  // useEffect(() => {
-  //   return () => {
-  //     if (roomId && user) {
-  //       removeUserFromRoom(roomId, user.uid);
-  //     }
-  //   };
-  // }, [roomId, user]);
   useEffect(() => {
     return () => {
-      // If we're continuing the game in an invite-only room, don't remove the user.
       if (roomId && user) {
-        if (!(roomType === "invite")) {
+        if (roomType !== "invite") {
           removeUserFromRoom(roomId, user.uid);
         }
       }
     };
   }, [roomId, user, roomType, params.continue]);
 
-  // Remove user when app goes to background (with grace period for invite rooms)
   useEffect(() => {
     let timeoutId: NodeJS.Timeout | null = null;
 
@@ -146,8 +129,6 @@ export default function GamePlay() {
     };
   }, [roomId, user, params.type]);
 
-  // Monitor game over condition
-
   useEffect(() => {
     (async () => {
       if (roomId && Object.keys(board).length > 0) {
@@ -155,7 +136,12 @@ export default function GamePlay() {
         if (gameOver) {
           router.push({
             pathname: "/gameResult",
-            params: { winner: gameOver, type: roomType, room: roomId },
+            params: {
+              winner: gameOver,
+              type: roomType,
+              room: roomId,
+              row: boardSize,
+            },
           });
         }
       }
