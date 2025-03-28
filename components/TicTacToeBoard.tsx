@@ -8,6 +8,7 @@ interface TicTacToeBoardProps {
   userId: string;
   rows?: number;
   cols?: number;
+  // onCellPress: (row: number, col: number) => void;
 }
 
 const TicTacToeBoard = ({
@@ -16,7 +17,8 @@ const TicTacToeBoard = ({
   userId,
   rows = 3,
   cols = 3,
-}: TicTacToeBoardProps) => {
+}: // onCellPress,
+TicTacToeBoardProps) => {
   const CELL_SIZE = 80;
   const THICKNESS = 10;
 
