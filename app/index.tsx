@@ -3,6 +3,8 @@ import { useRouter } from "expo-router";
 import { useAuth } from "../contexts/AuthContext";
 
 import React, { useEffect } from "react";
+import ButtonInIndex from "../components/ButtonInIndex";
+import { playClickingSound } from "../utils/soundEffects";
 
 const index = () => {
   const router = useRouter();
@@ -16,32 +18,28 @@ const index = () => {
         <Text style={styles.headerTitle3}>{"      "}Toe</Text>
       </View>
       <View>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => router.push("/preGameSettings")}
-        >
-          <Text style={styles.buttonText}>MULTIPLAYER</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.button2}
-          onPress={() =>
-            router.push({
-              pathname: "/gameLevelSelection",
-              // params: { type: "singlePlayer" },
-            })
-          }
-        >
-          <Text style={styles.buttonText}>SINGLEPLAYER</Text>
-        </TouchableOpacity>
-        <View style={styles.button3}>
-          <Text style={styles.buttonText}>SETTINGS</Text>
-        </View>
+        <ButtonInIndex
+          text="MULTIPLAYER"
+          route="/preGameSettings"
+          backgroundColor="#56b0e5"
+        />
+        <ButtonInIndex
+          text="SINGLEPLAYER"
+          route="/gameLevelSelection"
+          backgroundColor="#ec647e"
+        />
+        <ButtonInIndex
+          text="SETTINGS"
+          route="/settings"
+          backgroundColor="#898dc2"
+        />
+
         <TouchableOpacity
           style={styles.button}
           onPress={async () => {
             try {
               await logout();
-              console.log("Logged out successfully");
+              playClickingSound();
             } catch (error) {
               console.error("Error during logout", error);
             }

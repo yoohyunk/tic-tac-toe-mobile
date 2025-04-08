@@ -10,48 +10,30 @@ import {
 } from "react-native";
 // import { LinearGradient } from "expo-linear-gradient";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import ButtonInIndex from "../components/ButtonInIndex";
+import { playClickingSound } from "../utils/soundEffects";
 
 export default function preGameSettings() {
   const [inviteCode, setInviteCode] = useState("");
 
   const handleJoinRoom = () => {
     if (inviteCode.trim() !== "") {
+      playClickingSound();
       router.push({ pathname: "/gamePlay", params: { room: inviteCode } });
     }
+  };
+  const handleExit = () => {
+    playClickingSound();
+    router.push("/");
   };
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.backToHome}
-        onPress={() => router.push("/")}
-      >
+      <TouchableOpacity style={styles.backToHome} onPress={() => handleExit()}>
         <FontAwesome6 name="arrow-alt-circle-left" size={45} color="#fff" />
       </TouchableOpacity>
       <View style={styles.body}>
         <View>
-          <TouchableOpacity
-            style={styles.button1}
-            onPress={() =>
-              router.push({
-                pathname: "/boardSelection",
-                params: { type: "random" },
-              })
-            }
-          >
-            <Text style={styles.buttonText2}>Play with random user</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.button1}
-            onPress={() =>
-              router.push({
-                pathname: "/boardSelection",
-                params: { type: "invite" },
-              })
-            }
-          >
-            <Text style={styles.buttonText2}>create new room</Text>
-          </TouchableOpacity>
           <TextInput
             style={styles.input}
             placeholder="Enter invitation code"
@@ -68,6 +50,18 @@ export default function preGameSettings() {
           >
             <Text style={styles.buttonText2}>join the room with code</Text>
           </TouchableOpacity>
+          <ButtonInIndex
+            text="Play with random user"
+            route="/boardSelection"
+            param={{ type: "random" }}
+            backgroundColor="#56b0e5"
+          />
+          <ButtonInIndex
+            text="Create new room"
+            route="/boardSelection"
+            param={{ type: "invite" }}
+            backgroundColor="#ec647e"
+          />
         </View>
       </View>
     </View>
@@ -107,7 +101,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   button1: {
-    backgroundColor: "#56b0e5",
+    backgroundColor: "#898dc2",
     paddingVertical: 20,
     paddingHorizontal: 20,
     borderRadius: 8,
