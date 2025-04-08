@@ -1,11 +1,13 @@
+// src/firebase/auth.ts
+
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
+  updateProfile,
   onAuthStateChanged,
-  User,
+  User as FirebaseUser,
 } from "firebase/auth";
-
 import {
   collection,
   query,
@@ -14,131 +16,139 @@ import {
   getDoc,
   doc,
   setDoc,
+  updateDoc,
 } from "firebase/firestore";
-
 import { auth, firestore } from "./firebaseConfig";
 import { avatarMap, randomAvatarKey } from "../utils/randomAvatar";
-import { ImageSourcePropType } from "react-native";
+import type { ImageSourcePropType } from "react-native";
 
-// ✅ Login function
-export const login = async (email: string, password: string) => {
-  try {
-    const userCredential = await signInWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
-    const user = userCredential.user;
-
-    if (!user) {
-      throw new Error("Login failed: No user data found");
-    }
-
-    // Retrieve user nickname from Firestore
-    const userRef = doc(firestore, "users", user.uid);
-    const userSnap = await getDoc(userRef);
-
-    if (userSnap.exists()) {
-      return { ...user, nickname: userSnap.data().nickname };
-    } else {
-      return { ...user, nickname: null };
-    }
-  } catch (error) {
-    console.error("❌ Login error:", error);
-    throw error;
-  }
-};
-
-// ✅ Signup function
-export const signup = async (
-  email: string,
-  password: string,
-  nickname: string
-) => {
-  try {
-    // Create a new user with Firebase Authentication
-    const userCredential = await createUserWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
-    const user = userCredential.user;
-
-    if (!user) {
-      throw new Error("Signup error: No user data found");
-    }
-
-    // Check for duplicate nickname in Firestore
-    const usersRef = collection(firestore, "users");
-    const nicknameQuery = query(usersRef, where("nickname", "==", nickname));
-    const nicknameSnapshot = await getDocs(nicknameQuery);
-
-    if (!nicknameSnapshot.empty) {
-      console.error("❌ Nickname already in use");
-      throw new Error(
-        "This nickname is already taken. Please choose another one."
-      );
-    }
-
-    // Save user data in Firestore
-    await setDoc(doc(firestore, "users", user.uid), {
-      uid: user.uid,
-      email: user.email,
-      nickname: nickname,
-      avatar: randomAvatarKey(),
-    });
-
-    console.log("✅ User successfully saved to Firestore");
-    return { uid: user.uid, email: user.email, nickname };
-  } catch (error) {
-    console.error("❌ Signup error:", error);
-    throw error;
-  }
-};
-
-// ✅ Logout function (ensuring onAuthStateChanged updates)
-export const logout = async () => {
-  try {
-    await signOut(auth);
-    console.log("✅ Successfully logged out");
-  } catch (error) {
-    console.error("❌ Logout error:", error);
-    throw error;
-  }
-};
+////////////////////////////////////////////////////////////////////////////////
+// Interfaces
 
 export interface UserProfile {
   uid: string;
   nickname: string;
   avatar: ImageSourcePropType;
+  avatarKey: string;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+// Login
+
+export const login = async (email: string, password: string) => {
+  const userCredential = await signInWithEmailAndPassword(
+    auth,
+    email,
+    password
+  );
+  const user = userCredential.user;
+  if (!user) throw new Error("Login failed: No user data found");
+  return user;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// Signup
+
+export const signup = async (
+  email: string,
+  password: string,
+  nickname: string
+) => {
+  // 1) Create Auth user
+  const userCredential = await createUserWithEmailAndPassword(
+    auth,
+    email,
+    password
+  );
+  const user = userCredential.user;
+  if (!user) throw new Error("Signup error: No user data found");
+
+  // 2) Check duplicate nickname
+  const usersRef = collection(firestore, "users");
+  const nickQuery = query(usersRef, where("nickname", "==", nickname));
+  const nickSnap = await getDocs(nickQuery);
+  if (!nickSnap.empty) {
+    throw new Error("This nickname is already taken.");
+  }
+
+  // 3) Save user document with random avatarKey
+  const avatarKey = randomAvatarKey();
+  await setDoc(doc(firestore, "users", user.uid), {
+    uid: user.uid,
+    email: user.email,
+    nickname,
+    avatar: avatarKey,
+  });
+
+  return { uid: user.uid, email: user.email, nickname };
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// Logout
+
+export const logout = async () => {
+  await signOut(auth);
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// Get User Profile
 
 export const getUserProfile = async (
   uid: string
 ): Promise<UserProfile | null> => {
-  try {
-    const userDocRef = doc(firestore, "users", uid);
-    const userSnap = await getDoc(userDocRef);
+  const userDocRef = doc(firestore, "users", uid);
+  const userSnap = await getDoc(userDocRef);
+  if (!userSnap.exists()) return null;
 
-    if (!userSnap.exists()) {
-      console.warn(`No user found with UID: ${uid}`);
-      return null;
-    }
+  const data = userSnap.data();
+  const nickname = typeof data.nickname === "string" ? data.nickname : "Player";
 
-    const data = userSnap.data();
-    // Type-checking / safety
-    const nickname = typeof data.nickname === "string" ? data.nickname : "";
-    const key =
-      typeof data.avatar === "string" && avatarMap[data.avatar]
-        ? data.avatar
-        : "default";
-    return {
-      uid,
-      nickname,
-      avatar: avatarMap[key],
-    };
-  } catch (error) {
-    console.error("Error fetching user profile:", error);
-    throw error;
+  // data.avatar is the key stored in Firestore
+  const key =
+    typeof data.avatar === "string" && avatarMap[data.avatar]
+      ? data.avatar
+      : "default";
+
+  return {
+    uid,
+    nickname,
+    avatarKey: key,
+    avatar: avatarMap[key],
+  };
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// Update Nickname
+
+export const updateNickname = async (
+  uid: string,
+  newNickname: string
+): Promise<void> => {
+  // 1) Duplicate check
+  const usersRef = collection(firestore, "users");
+  const nickQuery = query(usersRef, where("nickname", "==", newNickname));
+  const nickSnap = await getDocs(nickQuery);
+  if (!nickSnap.empty) {
+    throw new Error("This nickname is already taken.");
   }
+
+  // 2) Update Firestore
+  const userRef = doc(firestore, "users", uid);
+  await updateDoc(userRef, { nickname: newNickname });
+
+  // 3) Update Auth displayName
+  if (auth.currentUser) {
+    await updateProfile(auth.currentUser, { displayName: newNickname });
+  }
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// Update Avatar
+
+export const updateAvatar = async (
+  uid: string,
+  avatarKey: string
+): Promise<void> => {
+  const userRef = doc(firestore, "users", uid);
+  await updateDoc(userRef, { avatar: avatarKey });
 };

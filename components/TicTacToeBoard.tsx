@@ -31,7 +31,7 @@ TicTacToeBoardProps) => {
   };
 
   const handleCellPress = (rowIndex: number, colIndex: number) => {
-    playLaserSound();
+    // playLaserSound();
     handlePlayerMove(roomId, userId, rowIndex, colIndex);
   };
   return (

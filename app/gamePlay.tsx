@@ -218,7 +218,7 @@ export default function GamePlay() {
         const col = aiMoveIndex % boardSize;
 
         await handlePlayerMove(roomId, "AI", row, col);
-        playLaserSound();
+        // playLaserSound();
       };
 
       const timer = setTimeout(runAIMove, 500);

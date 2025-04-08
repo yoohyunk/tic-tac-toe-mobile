@@ -1,3 +1,4 @@
+import { playLaserSound } from "../utils/soundEffects";
 import { firestore } from "./firebaseConfig";
 import {
   collection,
@@ -251,7 +252,7 @@ export const handlePlayerMove = async (
       turn: playerSymbol === "X" ? "O" : "X",
     });
 
-    console.log(`✅ Move made by ${userId}: (${rowIndex}, ${colIndex})`);
+    playLaserSound();
   }
 };
 
