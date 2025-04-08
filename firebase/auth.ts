@@ -17,6 +17,8 @@ import {
 } from "firebase/firestore";
 
 import { auth, firestore } from "./firebaseConfig";
+import { avatarMap, randomAvatarKey } from "../utils/randomAvatar";
+import { ImageSourcePropType } from "react-native";
 
 // ✅ Login function
 export const login = async (email: string, password: string) => {
@@ -83,6 +85,7 @@ export const signup = async (
       uid: user.uid,
       email: user.email,
       nickname: nickname,
+      avatar: randomAvatarKey(),
     });
 
     console.log("✅ User successfully saved to Firestore");
@@ -100,6 +103,42 @@ export const logout = async () => {
     console.log("✅ Successfully logged out");
   } catch (error) {
     console.error("❌ Logout error:", error);
+    throw error;
+  }
+};
+
+export interface UserProfile {
+  uid: string;
+  nickname: string;
+  avatar: ImageSourcePropType;
+}
+
+export const getUserProfile = async (
+  uid: string
+): Promise<UserProfile | null> => {
+  try {
+    const userDocRef = doc(firestore, "users", uid);
+    const userSnap = await getDoc(userDocRef);
+
+    if (!userSnap.exists()) {
+      console.warn(`No user found with UID: ${uid}`);
+      return null;
+    }
+
+    const data = userSnap.data();
+    // Type-checking / safety
+    const nickname = typeof data.nickname === "string" ? data.nickname : "";
+    const key =
+      typeof data.avatar === "string" && avatarMap[data.avatar]
+        ? data.avatar
+        : "default";
+    return {
+      uid,
+      nickname,
+      avatar: avatarMap[key],
+    };
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
     throw error;
   }
 };

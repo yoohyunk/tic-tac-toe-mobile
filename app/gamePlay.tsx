@@ -4,8 +4,9 @@ import {
   View,
   Text,
   StyleSheet,
-  ActivityIndicator,
+  Image,
   TouchableOpacity,
+  ImageSourcePropType,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { useAuth } from "../contexts/AuthContext";
@@ -25,6 +26,8 @@ import { getEasyMove } from "../utils/easyBot";
 import { getHardMove } from "../utils/hardBot";
 import { convertBoardObjectToArray } from "../utils/helper";
 import { playLaserSound } from "../utils/soundEffects";
+import { avatarMap, randomAvatarKey } from "../utils/randomAvatar";
+import { getUserProfile } from "../firebase/auth";
 
 export default function GamePlay() {
   const { user } = useAuth();
@@ -39,8 +42,12 @@ export default function GamePlay() {
   const [loading, setLoading] = useState(true);
   const [boardSize, setBoardSize] = useState<number>(initialBoardSize);
 
+  const [aiAvatar, setAiAvatar] = useState<ImageSourcePropType>(
+    () => avatarMap[randomAvatarKey()]
+  );
+
   const [players, setPlayers] = useState<
-    Array<{ uid: string; displayName: string }>
+    Array<{ uid: string; displayName: string; avatar: ImageSourcePropType }>
   >([]);
   const playerSymbol = isAIMode
     ? "X"
@@ -72,10 +79,19 @@ export default function GamePlay() {
           } else if (isAIMode) {
             assignedRoom = await assignToAIBoard(user.uid, boardSize, aiLevel);
             setRoomType("ai");
-            setPlayers([
-              { uid: user.uid, displayName: user.displayName || "Player" },
-              { uid: "AI", displayName: "AI" },
-            ]);
+            const userProfile = await getUserProfile(user.uid);
+            // setPlayers([
+            //   {
+            //     uid: user.uid,
+            //     displayName: userProfile?.nickname || "Player",
+            //     avatar: userProfile?.avatar || avatarMap[randomAvatarKey()],
+            //   },
+            //   {
+            //     uid: "AI",
+            //     displayName: "AI",
+            //     avatar: avatarMap[randomAvatarKey()],
+            //   },
+            // ]);
             setRoomStatus("playing");
           }
         }
@@ -86,8 +102,27 @@ export default function GamePlay() {
             assignedRoom,
             setBoard,
             setTurn,
-            (playersArray: any, status: string) => {
-              setPlayers(playersArray);
+            async (playersArray: string[], status: string) => {
+              // fetch every profile (or generate AI)
+              const fullProfiles = await Promise.all(
+                playersArray.map(async (uid) => {
+                  if (uid === "AI") {
+                    return {
+                      uid: "AI",
+                      displayName: "AI",
+                      avatar: aiAvatar,
+                    };
+                  }
+                  const profile = await getUserProfile(uid);
+                  return {
+                    uid,
+                    displayName: profile?.nickname ?? "Player",
+                    avatar: profile?.avatar || avatarMap[randomAvatarKey()],
+                  };
+                })
+              );
+
+              setPlayers(fullProfiles);
               setRoomStatus(status);
             },
             setBoardSize
@@ -205,11 +240,9 @@ export default function GamePlay() {
   //     await handlePlayerMove(roomId!, user.uid, row, col);
   //   }
   // };
-  const currentNickname = user?.displayName || "You";
-  const opponentNickname =
-    players.length === 2
-      ? players.find((p) => p.uid !== user?.uid)?.displayName || "Opponent"
-      : "Waiting...";
+  const currentUser = players.find((p) => p.uid === user?.uid);
+
+  const opponent = players.find((p) => p.uid !== user?.uid);
 
   return (
     <View style={styles.container}>
@@ -235,10 +268,18 @@ export default function GamePlay() {
       <View style={styles.body}>
         <View style={styles.profiles}>
           <View style={styles.profile}>
-            <Text>{currentNickname}</Text>
+            <Text>{currentUser ? currentUser.displayName : "you"}</Text>
             <View style={styles.profileImageContainer}>
               <View style={styles.profilePic1}>
-                <Text>profile {"\n"}picture</Text>
+                {currentUser?.avatar ? (
+                  <Image
+                    source={currentUser.avatar}
+                    style={styles.avatarImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <Text>profile{"\n"}picture</Text>
+                )}
               </View>
               <View style={styles.cross}>
                 <Text style={styles.crossText}>X</Text>
@@ -246,10 +287,18 @@ export default function GamePlay() {
             </View>
           </View>
           <View style={styles.profile}>
-            <Text>{opponentNickname}</Text>
+            <Text>{opponent ? opponent.displayName : "opponent"}</Text>
             <View style={styles.profileImageContainer}>
               <View style={styles.profilePic2}>
-                <Text>profile {"\n"}picture</Text>
+                {opponent?.avatar ? (
+                  <Image
+                    source={opponent.avatar}
+                    style={styles.avatarImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <Text>profile{"\n"}picture</Text>
+                )}
               </View>
               <View style={styles.circle}>
                 <Text style={styles.circleText}>O</Text>
@@ -302,8 +351,8 @@ export default function GamePlay() {
             />
             <Text style={styles.footerText}>
               {turn === "X"
-                ? `${currentNickname}'s Turn`
-                : `${opponentNickname}'s Turn`}
+                ? `${currentUser?.displayName}'s Turn`
+                : `${opponent?.displayName}'s Turn`}
             </Text>
           </>
         )}
@@ -377,20 +426,26 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   profilePic1: {
+    width: 100, // fixed size
+    height: 100,
     borderWidth: 20,
     borderColor: "#e76679",
     backgroundColor: "#FFF",
-    paddingHorizontal: 13,
-    paddingVertical: 20,
+    // paddingHorizontal: 13,
+    // paddingVertical: 20,
     borderRadius: 100,
+    overflow: "hidden",
   },
   profilePic2: {
+    width: 100, // fixed size
+    height: 100,
     borderWidth: 20,
     borderColor: "#53b2df",
     backgroundColor: "#FFF",
-    paddingHorizontal: 13,
-    paddingVertical: 20,
+    // paddingHorizontal: 13,
+    // paddingVertical: 20,
     borderRadius: 100,
+    overflow: "hidden",
   },
   cross: {
     position: "absolute",
@@ -463,5 +518,10 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  avatarImage: {
+    width: "100%", // fill the parent
+    height: "100%",
+    borderRadius: 0,
   },
 });
