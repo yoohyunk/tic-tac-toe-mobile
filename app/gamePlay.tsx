@@ -42,12 +42,10 @@ export default function GamePlay() {
   const [loading, setLoading] = useState(true);
   const [boardSize, setBoardSize] = useState<number>(initialBoardSize);
 
-  const [aiAvatar, setAiAvatar] = useState<ImageSourcePropType>(
-    () => avatarMap[randomAvatarKey()]
-  );
-
+  const [aiAvatar, setAiAvatar] = useState<ImageSourcePropType>();
+  const aiAvatarKey = randomAvatarKey();
   const [players, setPlayers] = useState<
-    Array<{ uid: string; displayName: string; avatar: ImageSourcePropType }>
+    Array<{ uid: string; displayName: string; avatar?: ImageSourcePropType }>
   >([]);
   const playerSymbol = isAIMode
     ? "X"
@@ -78,8 +76,9 @@ export default function GamePlay() {
             assignedRoom = await assignToRoom(user.uid, boardSize);
           } else if (isAIMode) {
             assignedRoom = await assignToAIBoard(user.uid, boardSize, aiLevel);
-            setRoomType("ai");
+            setRoomType(params.type as string);
             const userProfile = await getUserProfile(user.uid);
+            setAiAvatar(avatarMap[aiAvatarKey]);
             // setPlayers([
             //   {
             //     uid: user.uid,
@@ -107,10 +106,11 @@ export default function GamePlay() {
               const fullProfiles = await Promise.all(
                 playersArray.map(async (uid) => {
                   if (uid === "AI") {
+                    setAiAvatar(avatarMap[aiAvatarKey]);
                     return {
                       uid: "AI",
                       displayName: "AI",
-                      avatar: aiAvatar,
+                      avatar: avatarMap[aiAvatarKey],
                     };
                   }
                   const profile = await getUserProfile(uid);
@@ -134,7 +134,7 @@ export default function GamePlay() {
   }, [user, boardSize, params.room, params.type, params.continueRoom]);
 
   useEffect(() => {
-    if (!isAIMode && players.length === 2) {
+    if (isAIMode && players.length === 2) {
       setLoading(false);
     }
   }, [players]);
@@ -142,7 +142,7 @@ export default function GamePlay() {
   useEffect(() => {
     return () => {
       if (roomId && user) {
-        if (!isAIMode && roomType !== "invite") {
+        if (roomType !== "invite") {
           removeUserFromRoom(roomId, user.uid);
         }
       }
@@ -183,11 +183,17 @@ export default function GamePlay() {
     (async () => {
       if (roomId && Object.keys(board).length > 0) {
         const gameOver = await checkGameOver(roomId);
+        const winner = gameOver === "X" ? players[0] : players[1];
+        const userProfile =
+          winner.displayName === "AI"
+            ? aiAvatarKey
+            : (await getUserProfile(winner.uid))?.avatarKey;
         if (gameOver) {
           router.push({
             pathname: "/gameResult",
             params: {
-              winner: gameOver,
+              winner: winner.displayName,
+              winnerAvatar: userProfile,
               type: roomType,
               room: roomId,
               row: boardSize,

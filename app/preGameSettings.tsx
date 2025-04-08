@@ -8,7 +8,6 @@ import {
   TextInput,
   Button,
 } from "react-native";
-// import { LinearGradient } from "expo-linear-gradient";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import ButtonInIndex from "../components/ButtonInIndex";
 import { playClickingSound } from "../utils/soundEffects";
@@ -109,25 +108,7 @@ const styles = StyleSheet.create({
     width: 320,
     alignItems: "center",
   },
-  button2: {
-    backgroundColor: "#ec647e",
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginVertical: 10,
-    width: 320,
-    alignItems: "center",
-  },
-  button3: {
-    width: 320,
-    backgroundColor: "#898dc2",
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginVertical: 10,
 
-    alignItems: "center",
-  },
   buttonText2: {
     color: "#FFFFFF",
     fontSize: 30,

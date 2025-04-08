@@ -55,15 +55,12 @@ export default function Settings() {
   const onSave = async () => {
     if (!uid || !profile) return;
     try {
-      // 닉네임 변경이 있을 때만
       if (nickname.trim() && nickname.trim() !== profile.nickname) {
         await updateNickname(uid, nickname.trim());
       }
-      // 아바타 변경이 있을 때만
       if (avatarKey && avatarKey !== profile.avatarKey) {
         await updateAvatar(uid, avatarKey);
       }
-      // 변경 후 프로필 다시 로드
       const updated = await getUserProfile(uid);
       if (updated) {
         setProfile(updated);

@@ -380,7 +380,7 @@ export const removeUserFromRoom = async (roomId: string, userId: string) => {
     );
 
     // If no players remain, delete the room; otherwise update the room
-    if (updatedPlayers.length === 0) {
+    if (updatedPlayers.length === 0 || data.isAIMode) {
       await deleteDoc(roomRef);
       console.log(`Room ${roomId} deleted because no players remain.`);
     } else {

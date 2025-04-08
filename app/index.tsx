@@ -64,7 +64,6 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: "#40395b",
-
     justifyContent: "space-between",
     width: "100%",
     alignContent: "center",
@@ -105,25 +104,7 @@ const styles = StyleSheet.create({
     width: 320,
     alignItems: "center",
   },
-  button2: {
-    backgroundColor: "#ec647e",
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginVertical: 10,
-    width: 320,
-    alignItems: "center",
-  },
-  button3: {
-    width: 320,
-    backgroundColor: "#898dc2",
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginVertical: 10,
 
-    alignItems: "center",
-  },
   buttonText: {
     color: "#FFFFFF",
     fontSize: 30,

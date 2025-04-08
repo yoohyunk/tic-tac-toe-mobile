@@ -9,7 +9,6 @@ interface TicTacToeBoardProps {
   userId: string;
   rows?: number;
   cols?: number;
-  // onCellPress: (row: number, col: number) => void;
 }
 
 const TicTacToeBoard = ({
@@ -18,8 +17,7 @@ const TicTacToeBoard = ({
   userId,
   rows = 3,
   cols = 3,
-}: // onCellPress,
-TicTacToeBoardProps) => {
+}: TicTacToeBoardProps) => {
   const CELL_SIZE = 80;
   const THICKNESS = 10;
 
@@ -31,7 +29,6 @@ TicTacToeBoardProps) => {
   };
 
   const handleCellPress = (rowIndex: number, colIndex: number) => {
-    // playLaserSound();
     handlePlayerMove(roomId, userId, rowIndex, colIndex);
   };
   return (
@@ -41,14 +38,13 @@ TicTacToeBoardProps) => {
         { width: boardWidth + THICKNESS, height: boardHeight + THICKNESS },
       ]}
     >
-      {/* Extruded background for a 3D effect */}
       <View
         style={[
           styles.boardExtrude,
           { width: boardWidth, height: boardHeight },
         ]}
       />
-      {/* Main game board surface */}
+
       <View
         style={[
           styles.boardSurface,

@@ -59,37 +59,4 @@ const styles = StyleSheet.create({
     fontSize: 25,
     fontWeight: "bold",
   },
-  button1: {
-    backgroundColor: "#56b0e5",
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginVertical: 10,
-    width: 320,
-    alignItems: "center",
-  },
-  button2: {
-    backgroundColor: "#ec647e",
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginVertical: 10,
-    width: 320,
-    alignItems: "center",
-  },
-  button3: {
-    width: 320,
-    backgroundColor: "#898dc2",
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginVertical: 10,
-
-    alignItems: "center",
-  },
-  buttonText2: {
-    color: "#FFFFFF",
-    fontSize: 30,
-    fontWeight: "bold",
-  },
 });

@@ -33,7 +33,6 @@ const ButtonInIndex = ({
 
 const styles = StyleSheet.create({
   button: {
-    // backgroundColor: "#56b0e5",
     paddingVertical: 20,
     paddingHorizontal: 20,
     borderRadius: 8,

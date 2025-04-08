@@ -1,5 +1,3 @@
-// src/firebase/auth.ts
-
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -22,18 +20,12 @@ import { auth, firestore } from "./firebaseConfig";
 import { avatarMap, randomAvatarKey } from "../utils/randomAvatar";
 import type { ImageSourcePropType } from "react-native";
 
-////////////////////////////////////////////////////////////////////////////////
-// Interfaces
-
 export interface UserProfile {
   uid: string;
   nickname: string;
   avatar: ImageSourcePropType;
   avatarKey: string;
 }
-
-////////////////////////////////////////////////////////////////////////////////
-// Login
 
 export const login = async (email: string, password: string) => {
   const userCredential = await signInWithEmailAndPassword(
@@ -46,15 +38,11 @@ export const login = async (email: string, password: string) => {
   return user;
 };
 
-////////////////////////////////////////////////////////////////////////////////
-// Signup
-
 export const signup = async (
   email: string,
   password: string,
   nickname: string
 ) => {
-  // 1) Create Auth user
   const userCredential = await createUserWithEmailAndPassword(
     auth,
     email,
@@ -63,7 +51,6 @@ export const signup = async (
   const user = userCredential.user;
   if (!user) throw new Error("Signup error: No user data found");
 
-  // 2) Check duplicate nickname
   const usersRef = collection(firestore, "users");
   const nickQuery = query(usersRef, where("nickname", "==", nickname));
   const nickSnap = await getDocs(nickQuery);
@@ -71,7 +58,6 @@ export const signup = async (
     throw new Error("This nickname is already taken.");
   }
 
-  // 3) Save user document with random avatarKey
   const avatarKey = randomAvatarKey();
   await setDoc(doc(firestore, "users", user.uid), {
     uid: user.uid,
@@ -83,15 +69,9 @@ export const signup = async (
   return { uid: user.uid, email: user.email, nickname };
 };
 
-////////////////////////////////////////////////////////////////////////////////
-// Logout
-
 export const logout = async () => {
   await signOut(auth);
 };
-
-////////////////////////////////////////////////////////////////////////////////
-// Get User Profile
 
 export const getUserProfile = async (
   uid: string
@@ -103,7 +83,6 @@ export const getUserProfile = async (
   const data = userSnap.data();
   const nickname = typeof data.nickname === "string" ? data.nickname : "Player";
 
-  // data.avatar is the key stored in Firestore
   const key =
     typeof data.avatar === "string" && avatarMap[data.avatar]
       ? data.avatar
@@ -117,14 +96,10 @@ export const getUserProfile = async (
   };
 };
 
-////////////////////////////////////////////////////////////////////////////////
-// Update Nickname
-
 export const updateNickname = async (
   uid: string,
   newNickname: string
 ): Promise<void> => {
-  // 1) Duplicate check
   const usersRef = collection(firestore, "users");
   const nickQuery = query(usersRef, where("nickname", "==", newNickname));
   const nickSnap = await getDocs(nickQuery);
@@ -132,18 +107,13 @@ export const updateNickname = async (
     throw new Error("This nickname is already taken.");
   }
 
-  // 2) Update Firestore
   const userRef = doc(firestore, "users", uid);
   await updateDoc(userRef, { nickname: newNickname });
 
-  // 3) Update Auth displayName
   if (auth.currentUser) {
     await updateProfile(auth.currentUser, { displayName: newNickname });
   }
 };
-
-////////////////////////////////////////////////////////////////////////////////
-// Update Avatar
 
 export const updateAvatar = async (
   uid: string,

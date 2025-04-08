@@ -1,8 +1,10 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { removeUserFromRoom } from "../firebase/roomManager";
 import { useAuth } from "../contexts/AuthContext";
+import { avatarMap } from "../utils/randomAvatar";
+import ButtonInIndex from "../components/ButtonInIndex";
 
 export default function GameResult() {
   const { winner } = useLocalSearchParams<{ winner?: string }>();
@@ -10,11 +12,23 @@ export default function GameResult() {
   const { room } = useLocalSearchParams<{ room?: string }>();
   const { user } = useAuth();
   const { row } = useLocalSearchParams<{ row?: string }>();
+  const { winnerAvatar } = useLocalSearchParams<{ winnerAvatar?: string }>();
   const rowNumber = row !== undefined ? Number(row) : undefined;
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Game Over</Text>
+      <View style={styles.profilePic1}>
+        {winnerAvatar ? (
+          <Image
+            source={avatarMap[winnerAvatar]}
+            style={styles.avatarImage}
+            resizeMode="cover"
+          />
+        ) : (
+          <Text>profile{"\n"}picture</Text>
+        )}
+      </View>
       <Text style={styles.message}>
         {winner === "Tie"
           ? "It's a Tie!"
@@ -24,30 +38,21 @@ export default function GameResult() {
       </Text>
       <View style={styles.buttons}>
         {type === "invite" ? (
-          <TouchableOpacity
-            onPress={() =>
-              router.push({
-                pathname: "/gamePlay",
-                params: { continue: room }, // 'room' is the invite room ID
-              })
-            }
-            style={styles.button}
-          >
-            <Text style={styles.buttonText}>Continue Game</Text>
-          </TouchableOpacity>
+          <ButtonInIndex
+            text="Continue Game"
+            route="/gamePlay"
+            param={{ continue: room }}
+            backgroundColor="#56b0e5"
+          />
         ) : (
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => {
-              router.push({
-                pathname: "/gamePlay",
-                params: { row: rowNumber, type: type },
-              });
-            }}
-          >
-            <Text style={styles.buttonText}>New Game</Text>
-          </TouchableOpacity>
+          <ButtonInIndex
+            text="New Game"
+            route="/gamePlay"
+            param={{ type, row: rowNumber }}
+            backgroundColor="#ec647e"
+          />
         )}
+
         <TouchableOpacity
           onPress={async () => {
             if (room && user) {
@@ -67,19 +72,31 @@ export default function GameResult() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFF",
     justifyContent: "center",
     alignItems: "center",
-    padding: 20,
+    backgroundColor: "#40395b",
+    gap: 20,
   },
+
   title: {
-    fontSize: 32,
+    color: "#FFFFFF",
+    fontSize: 55,
     fontWeight: "bold",
-    marginBottom: 20,
   },
   message: {
-    fontSize: 24,
-    color: "#333",
+    fontSize: 50,
+    color: "#ffffff",
+    textAlign: "center",
+    fontWeight: "bold",
+  },
+  profilePic1: {
+    width: 200,
+    height: 200,
+    borderWidth: 20,
+    borderColor: "#ffe880",
+    backgroundColor: "#FFF",
+    borderRadius: 100,
+    overflow: "hidden",
   },
   buttons: {
     justifyContent: "center",
@@ -88,14 +105,22 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   button: {
-    backgroundColor: "#56b0e5",
     paddingVertical: 20,
     paddingHorizontal: 20,
     borderRadius: 8,
     marginVertical: 10,
+    width: 320,
+    alignItems: "center",
+    backgroundColor: "#ec647e",
   },
   buttonText: {
-    color: "#FFF",
-    fontSize: 18,
+    color: "#FFFFFF",
+    fontSize: 25,
+    fontWeight: "bold",
+  },
+  avatarImage: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 0,
   },
 });
