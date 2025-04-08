@@ -24,6 +24,7 @@ import * as Clipboard from "expo-clipboard";
 import { getEasyMove } from "../utils/easyBot";
 import { getHardMove } from "../utils/hardBot";
 import { convertBoardObjectToArray } from "../utils/helper";
+import { playLaserSound } from "../utils/soundEffects";
 
 export default function GamePlay() {
   const { user } = useAuth();
@@ -182,6 +183,7 @@ export default function GamePlay() {
         const col = aiMoveIndex % boardSize;
 
         await handlePlayerMove(roomId, "AI", row, col);
+        playLaserSound();
       };
 
       const timer = setTimeout(runAIMove, 500);

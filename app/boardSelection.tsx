@@ -1,54 +1,42 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
-import { TouchableOpacity, View, Text, StyleSheet } from "react-native";
+
+import { TouchableOpacity, View, Text, StyleSheet, Button } from "react-native";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import ButtonInIndex from "../components/ButtonInIndex";
+import { playClickingSound } from "../utils/soundEffects";
 
 export default function BoardSelection() {
   const params = useLocalSearchParams();
   const router = useRouter();
+  const handleExit = () => {
+    playClickingSound();
+    router.push("/");
+  };
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.backToHome}
-        onPress={() => router.push("/preGameSettings")}
-      >
+      <TouchableOpacity style={styles.backToHome} onPress={() => handleExit()}>
         <FontAwesome6 name="arrow-alt-circle-left" size={45} color="#fff" />
       </TouchableOpacity>
       <Text style={styles.buttonText}>Select Board Size</Text>
-      <TouchableOpacity
-        style={styles.button1}
-        onPress={() => {
-          router.push({
-            pathname: "/gamePlay",
-            params: { row: 3, type: params.type },
-          });
-        }}
-      >
-        <Text style={styles.buttonText2}>3 x 3</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.button2}
-        onPress={() => {
-          router.push({
-            pathname: "/gamePlay",
-            params: { row: 4, type: params.type },
-          });
-        }}
-      >
-        <Text style={styles.buttonText2}>4 x 4</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.button3}
-        onPress={() => {
-          router.push({
-            pathname: "/gamePlay",
-            params: { row: 5, type: params.type },
-          });
-        }}
-      >
-        <Text style={styles.buttonText2}>5 x 5</Text>
-      </TouchableOpacity>
+      <ButtonInIndex
+        text="3 x 3"
+        route="/gamePlay"
+        param={{ row: 3, type: params.type }}
+        backgroundColor="#56b0e5"
+      />
+      <ButtonInIndex
+        text="4 x 4"
+        route="/gamePlay"
+        param={{ row: 4, type: params.type }}
+        backgroundColor="#ec647e"
+      />
+      <ButtonInIndex
+        text="5 x 5"
+        route="/gamePlay"
+        param={{ row: 5, type: params.type }}
+        backgroundColor="#898dc2"
+      />
     </View>
   );
 }

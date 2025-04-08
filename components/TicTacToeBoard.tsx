@@ -1,6 +1,7 @@
 import React from "react";
 import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
 import { handlePlayerMove } from "../firebase/roomManager";
+import { playLaserSound } from "../utils/soundEffects";
 
 interface TicTacToeBoardProps {
   board: { [key: string]: string };
@@ -29,6 +30,10 @@ TicTacToeBoardProps) => {
     return (rowIndex + colIndex) % 2 === 0 ? "#e4e3f0" : "#FFFFFF";
   };
 
+  const handleCellPress = (rowIndex: number, colIndex: number) => {
+    playLaserSound();
+    handlePlayerMove(roomId, userId, rowIndex, colIndex);
+  };
   return (
     <View
       style={[
@@ -61,9 +66,7 @@ TicTacToeBoardProps) => {
                     styles.cell,
                     { backgroundColor: getCellColor(rowIndex, colIndex) },
                   ]}
-                  onPress={() =>
-                    handlePlayerMove(roomId, userId, rowIndex, colIndex)
-                  }
+                  onPress={() => handleCellPress(rowIndex, colIndex)}
                 >
                   <Text style={styles.cellText}>{board[cellKey]}</Text>
                 </TouchableOpacity>

@@ -1,41 +1,34 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { TouchableOpacity, View, Text, StyleSheet } from "react-native";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import ButtonInIndex from "../components/ButtonInIndex";
+import { playClickingSound } from "../utils/soundEffects";
 
 export default function BoardSelection() {
   const router = useRouter();
+  const handleExit = () => {
+    playClickingSound();
+    router.push("/");
+  };
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.backToHome}
-        onPress={() => router.push("/")}
-      >
+      <TouchableOpacity style={styles.backToHome} onPress={() => handleExit()}>
         <FontAwesome6 name="arrow-alt-circle-left" size={45} color="#fff" />
       </TouchableOpacity>
       <Text style={styles.buttonText}>Select Level</Text>
-      <TouchableOpacity
-        style={styles.button1}
-        onPress={() => {
-          router.push({
-            pathname: "/boardSelection",
-            params: { type: "easy" },
-          });
-        }}
-      >
-        <Text style={styles.buttonText2}>Easy</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.button3}
-        onPress={() => {
-          router.push({
-            pathname: "/boardSelection",
-            params: { type: "hard" },
-          });
-        }}
-      >
-        <Text style={styles.buttonText2}>Hard</Text>
-      </TouchableOpacity>
+      <ButtonInIndex
+        text="Easy"
+        route="/boardSelection"
+        param={{ type: "easy" }}
+        backgroundColor="#56b0e5"
+      />
+      <ButtonInIndex
+        text="Hard"
+        route="/boardSelection"
+        param={{ type: "hard" }}
+        backgroundColor="#ec647e"
+      />
     </View>
   );
 }
