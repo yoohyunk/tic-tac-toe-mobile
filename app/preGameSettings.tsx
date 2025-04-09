@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     height: "100%",
-    backgroundColor: "#b9badf",
+    backgroundColor: "#40395b",
     zIndex: -1,
   },
 
@@ -109,6 +109,11 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     width: 320,
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
   },
 
   buttonText2: {

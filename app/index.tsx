@@ -5,6 +5,7 @@ import { useAuth } from "../contexts/AuthContext";
 import React, { useEffect } from "react";
 import ButtonInIndex from "../components/ButtonInIndex";
 import { playClickingSound } from "../utils/soundEffects";
+import Logo from "../components/Logo";
 
 const index = () => {
   const router = useRouter();
@@ -12,11 +13,12 @@ const index = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      {/* <View style={styles.header}>
         <Text style={styles.headerTitle1}>Tic{"      "}</Text>
         <Text style={styles.headerTitle2}>Tac</Text>
         <Text style={styles.headerTitle3}>{"      "}Toe</Text>
-      </View>
+      </View> */}
+      <Logo />
       <View>
         <ButtonInIndex
           text="MULTIPLAYER"
@@ -103,6 +105,11 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     width: 320,
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
   },
 
   buttonText: {
