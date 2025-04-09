@@ -7,6 +7,7 @@ import {
   Image,
   TouchableOpacity,
   ImageSourcePropType,
+  Vibration,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { useAuth } from "../contexts/AuthContext";
@@ -25,7 +26,11 @@ import * as Clipboard from "expo-clipboard";
 import { getEasyMove } from "../utils/easyBot";
 import { getHardMove } from "../utils/hardBot";
 import { convertBoardObjectToArray } from "../utils/helper";
-import { playLaserSound } from "../utils/soundEffects";
+import {
+  playLaserSound,
+  playOverSound,
+  playStartSound,
+} from "../utils/soundEffects";
 import { avatarMap, randomAvatarKey } from "../utils/randomAvatar";
 import { getUserProfile } from "../firebase/auth";
 
@@ -91,6 +96,8 @@ export default function GamePlay() {
             //     avatar: avatarMap[randomAvatarKey()],
             //   },
             // ]);
+            playStartSound();
+            Vibration.vibrate(1000);
             setRoomStatus("playing");
           }
         }
@@ -189,6 +196,8 @@ export default function GamePlay() {
             ? aiAvatarKey
             : (await getUserProfile(winner.uid))?.avatarKey;
         if (gameOver) {
+          playStartSound();
+          Vibration.vibrate(1000);
           router.push({
             pathname: "/gameResult",
             params: {
@@ -284,7 +293,7 @@ export default function GamePlay() {
                     resizeMode="cover"
                   />
                 ) : (
-                  <Text>profile{"\n"}picture</Text>
+                  <Text></Text>
                 )}
               </View>
               <View style={styles.cross}>
@@ -303,7 +312,7 @@ export default function GamePlay() {
                     resizeMode="cover"
                   />
                 ) : (
-                  <Text>profile{"\n"}picture</Text>
+                  <Text></Text>
                 )}
               </View>
               <View style={styles.circle}>

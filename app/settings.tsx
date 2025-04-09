@@ -33,7 +33,6 @@ export default function Settings() {
   const [loading, setLoading] = useState(true);
   const avatarKeys = Object.keys(avatarMap);
 
-  // 1) 마운트 시 프로필 로드
   useEffect(() => {
     const user = auth.currentUser;
     if (user) {
@@ -51,6 +50,11 @@ export default function Settings() {
       setLoading(false);
     }
   }, []);
+
+  const handleSelectAvatar = (key: string) => {
+    playClickingSound();
+    setAvatarKey(key);
+  };
 
   const onSave = async () => {
     if (!uid || !profile) return;
@@ -120,7 +124,7 @@ export default function Settings() {
                 styles.avatarWrapper,
                 isSelected && styles.avatarSelected,
               ]}
-              onPress={() => setAvatarKey(key)}
+              onPress={() => handleSelectAvatar(key)}
             >
               <Image
                 source={avatarMap[key]}

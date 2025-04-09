@@ -5,6 +5,7 @@ import { removeUserFromRoom } from "../firebase/roomManager";
 import { useAuth } from "../contexts/AuthContext";
 import { avatarMap } from "../utils/randomAvatar";
 import ButtonInIndex from "../components/ButtonInIndex";
+import { playClickingSound } from "../utils/soundEffects";
 
 export default function GameResult() {
   const { winner } = useLocalSearchParams<{ winner?: string }>();
@@ -49,7 +50,7 @@ export default function GameResult() {
             text="New Game"
             route="/gamePlay"
             param={{ type, row: rowNumber }}
-            backgroundColor="#ec647e"
+            backgroundColor="#56b0e5"
           />
         )}
 
@@ -57,6 +58,7 @@ export default function GameResult() {
           onPress={async () => {
             if (room && user) {
               await removeUserFromRoom(room, user.uid);
+              playClickingSound();
             }
             router.push("/");
           }}

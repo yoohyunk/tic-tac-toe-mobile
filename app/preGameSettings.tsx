@@ -49,6 +49,8 @@ export default function preGameSettings() {
           >
             <Text style={styles.buttonText2}>join the room with code</Text>
           </TouchableOpacity>
+        </View>
+        <View>
           <ButtonInIndex
             text="Play with random user"
             route="/boardSelection"
@@ -111,7 +113,7 @@ const styles = StyleSheet.create({
 
   buttonText2: {
     color: "#FFFFFF",
-    fontSize: 30,
+    fontSize: 25,
     fontWeight: "bold",
   },
   input: {
@@ -122,6 +124,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginVertical: 10,
     alignItems: "center",
+    fontSize: 20,
   },
   buttonDisabled: {
     backgroundColor: "#ccc",

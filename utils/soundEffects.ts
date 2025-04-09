@@ -33,10 +33,10 @@ async function playLogoSound() {
   }
 }
 
-async function playTechSound() {
+async function playStartSound() {
   try {
     const { sound } = await Audio.Sound.createAsync(
-      require("./assets/tech_gui_9.wav")
+      require("../sounds/start.mp3")
     );
     await sound.playAsync();
   } catch (error) {
@@ -44,4 +44,21 @@ async function playTechSound() {
   }
 }
 
-export { playClickingSound, playLaserSound, playLogoSound, playTechSound };
+async function playOverSound() {
+  try {
+    const { sound } = await Audio.Sound.createAsync(
+      require("../sounds/ending.mp3")
+    );
+    await sound.playAsync();
+  } catch (error) {
+    console.error("Error playing sound", error);
+  }
+}
+
+export {
+  playClickingSound,
+  playLaserSound,
+  playLogoSound,
+  playOverSound,
+  playStartSound,
+};
