@@ -18,7 +18,7 @@ import {
  * The board size is clamped between 3 and 5.
  */
 const createEmptyBoard = (size: number) => {
-  const boardSize = Math.max(3, Math.min(size, 5)); // Clamp the size
+  const boardSize = Math.max(3, Math.min(size, 5));
   let boardObject: { [key: string]: string } = {};
   for (let r = 0; r < boardSize; r++) {
     for (let c = 0; c < boardSize; c++) {
@@ -64,7 +64,6 @@ export const assignToRoom = async (userId: string, boardSize: number = 3) => {
           status: "full",
         });
 
-        console.log(`✅ User ${userId} joined room: ${assignedRoomId}`);
         return assignedRoomId;
       }
     }
@@ -83,7 +82,6 @@ export const assignToRoom = async (userId: string, boardSize: number = 3) => {
       inviteOnly: false, // This room is open for auto-match.
     });
 
-    console.log(`✅ New room created by ${userId}: ${assignedRoomId}`);
     return assignedRoomId;
   } catch (error) {
     console.error("❌ Error assigning room:", error);
@@ -111,7 +109,6 @@ export const assignToAIBoard = async (
     aiLevel,
   });
 
-  console.log(`🤖 AI Room created by ${userId}: ${roomId}`);
   return roomId;
 };
 
@@ -135,7 +132,6 @@ export const createInviteRoom = async (
       inviteOnly: true, // Mark as invite-only
     });
 
-    console.log(`✅ Invite room created by ${userId}: ${roomId}`);
     return roomId;
   } catch (error) {
     console.error("❌ Error creating invite room:", error);
@@ -162,7 +158,6 @@ export const joinRoomWithCode = async (userId: string, inviteCode: string) => {
 
     // Check if the user is already in the room.
     if (Array.isArray(roomData.players) && roomData.players.includes(userId)) {
-      console.log("User already in the room.");
       return inviteCode;
     }
 
@@ -175,7 +170,6 @@ export const joinRoomWithCode = async (userId: string, inviteCode: string) => {
       status: newStatus,
     });
 
-    console.log(`✅ User ${userId} joined invite room: ${inviteCode}`);
     return inviteCode;
   } catch (error) {
     console.error("Error joining room with code:", error);
@@ -332,13 +326,10 @@ export const checkGameOver = async (roomId: string) => {
   const data = roomSnap.data();
   if (!data.board || !data.boardSize) return false;
 
-  console.log("Room inviteOnly flag:", data.inviteOnly);
-
   const winner = findWinner(data.board, data.boardSize);
   if (winner) {
     if (data.inviteOnly) {
       await updateDoc(roomRef, {
-        // players: [],
         board: createEmptyBoard(data.boardSize),
         turn: "X", // Reset turn to X
         status: "waiting",
@@ -348,8 +339,6 @@ export const checkGameOver = async (roomId: string) => {
 
     // Update the room status to "finished" in Firestore.
     await updateDoc(roomRef, { status: "finished" });
-    console.log(`✅ Game Over! Winner: ${winner}`);
-
     return winner;
   }
 
@@ -381,14 +370,12 @@ export const removeUserFromRoom = async (roomId: string, userId: string) => {
     // If no players remain, delete the room; otherwise update the room
     if (updatedPlayers.length === 0 || data.isAIMode) {
       await deleteDoc(roomRef);
-      console.log(`Room ${roomId} deleted because no players remain.`);
     } else {
       await updateDoc(roomRef, {
         players: updatedPlayers,
         status: "waiting", // Reset status to waiting so that a new opponent can join
         board: createEmptyBoard(data.boardSize),
       });
-      console.log(`User ${userId} removed from room ${roomId}.`);
     }
   } catch (error) {
     console.error("Error removing user from room:", error);
@@ -399,7 +386,7 @@ export const removeRoom = async (roomId: string) => {
   try {
     const roomRef = doc(firestore, "rooms", roomId);
     await deleteDoc(roomRef);
-    console.log(`Room ${roomId} deleted.`);
+
   } catch (error) {
     console.error("Error deleting room:", error);
   }

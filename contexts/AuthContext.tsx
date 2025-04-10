@@ -39,7 +39,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<User | null>(null);
   const [nickname, setNickname] = useState<string | null>(null);
 
-  // Listen for authentication state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
@@ -58,7 +57,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => unsubscribe();
   }, []);
 
-  // Login function
   const login = async (email: string, password: string) => {
     try {
       const userCredential = await signInWithEmailAndPassword(
@@ -68,7 +66,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       );
       setUser(userCredential.user);
 
-      // Retrieve nickname from Firestore
       const userRef = doc(firestore, "users", userCredential.user.uid);
       const userSnap = await getDoc(userRef);
       if (userSnap.exists()) {
@@ -82,7 +79,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // Signup function
   const signup = async (email: string, password: string, nickname: string) => {
     try {
       // Check for duplicate nickname in Firestore
@@ -96,7 +92,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         );
       }
 
-      // Create new user with Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
@@ -104,7 +99,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       );
       const user = userCredential.user;
 
-      // Save user data in Firestore
       await setDoc(doc(firestore, "users", user.uid), {
         uid: user.uid,
         email: user.email,
@@ -119,7 +113,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // Logout function
   const logout = async () => {
     try {
       await signOut(auth);
@@ -137,7 +130,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
-// Custom hook for using the authentication context
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
