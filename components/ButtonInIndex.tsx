@@ -4,7 +4,7 @@ import { playClickingSound } from "../utils/soundEffects";
 
 interface ButtonInIndexProps {
   text: string;
-  route: string;
+  route?: string;
   param?: Record<string, any>;
   backgroundColor: string;
 }
@@ -17,7 +17,9 @@ const ButtonInIndex = ({
 }: ButtonInIndexProps) => {
   const handleClick = () => {
     playClickingSound();
-    router.push({ pathname: route, params: param });
+    if (route) {
+      router.push({ pathname: route, params: param });
+    }
   };
   return (
     <TouchableOpacity
@@ -31,13 +33,17 @@ const ButtonInIndex = ({
 
 const styles = StyleSheet.create({
   button: {
-    // backgroundColor: "#56b0e5",
     paddingVertical: 20,
     paddingHorizontal: 20,
     borderRadius: 8,
     marginVertical: 10,
     width: 320,
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
   },
   buttonText: {
     color: "#FFFFFF",

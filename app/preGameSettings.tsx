@@ -8,7 +8,6 @@ import {
   TextInput,
   Button,
 } from "react-native";
-// import { LinearGradient } from "expo-linear-gradient";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import ButtonInIndex from "../components/ButtonInIndex";
 import { playClickingSound } from "../utils/soundEffects";
@@ -50,6 +49,8 @@ export default function preGameSettings() {
           >
             <Text style={styles.buttonText2}>join the room with code</Text>
           </TouchableOpacity>
+        </View>
+        <View>
           <ButtonInIndex
             text="Play with random user"
             route="/boardSelection"
@@ -81,7 +82,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     height: "100%",
-    backgroundColor: "#b9badf",
+    backgroundColor: "#40395b",
     zIndex: -1,
   },
 
@@ -108,29 +109,16 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     width: 320,
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
   },
-  button2: {
-    backgroundColor: "#ec647e",
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginVertical: 10,
-    width: 320,
-    alignItems: "center",
-  },
-  button3: {
-    width: 320,
-    backgroundColor: "#898dc2",
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginVertical: 10,
 
-    alignItems: "center",
-  },
   buttonText2: {
     color: "#FFFFFF",
-    fontSize: 30,
+    fontSize: 25,
     fontWeight: "bold",
   },
   input: {
@@ -141,6 +129,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginVertical: 10,
     alignItems: "center",
+    fontSize: 20,
   },
   buttonDisabled: {
     backgroundColor: "#ccc",

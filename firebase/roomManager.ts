@@ -1,3 +1,4 @@
+import { playLaserSound } from "../utils/soundEffects";
 import { firestore } from "./firebaseConfig";
 import {
   collection,
@@ -246,12 +247,11 @@ export const handlePlayerMove = async (
     }
 
     // Update board and toggle turn
+
     await updateDoc(roomRef, {
       [`board.${cellKey}`]: playerSymbol,
       turn: playerSymbol === "X" ? "O" : "X",
     });
-
-    console.log(`✅ Move made by ${userId}: (${rowIndex}, ${colIndex})`);
   }
 };
 
@@ -349,7 +349,7 @@ export const checkGameOver = async (roomId: string) => {
     // Update the room status to "finished" in Firestore.
     await updateDoc(roomRef, { status: "finished" });
     console.log(`✅ Game Over! Winner: ${winner}`);
-    await deleteDoc(roomRef);
+
     return winner;
   }
 
@@ -379,7 +379,7 @@ export const removeUserFromRoom = async (roomId: string, userId: string) => {
     );
 
     // If no players remain, delete the room; otherwise update the room
-    if (updatedPlayers.length === 0) {
+    if (updatedPlayers.length === 0 || data.isAIMode) {
       await deleteDoc(roomRef);
       console.log(`Room ${roomId} deleted because no players remain.`);
     } else {
@@ -392,5 +392,15 @@ export const removeUserFromRoom = async (roomId: string, userId: string) => {
     }
   } catch (error) {
     console.error("Error removing user from room:", error);
+  }
+};
+
+export const removeRoom = async (roomId: string) => {
+  try {
+    const roomRef = doc(firestore, "rooms", roomId);
+    await deleteDoc(roomRef);
+    console.log(`Room ${roomId} deleted.`);
+  } catch (error) {
+    console.error("Error deleting room:", error);
   }
 };

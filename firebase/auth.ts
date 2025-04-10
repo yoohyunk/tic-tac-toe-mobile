@@ -2,10 +2,10 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
+  updateProfile,
   onAuthStateChanged,
-  User,
+  User as FirebaseUser,
 } from "firebase/auth";
-
 import {
   collection,
   query,
@@ -14,92 +14,111 @@ import {
   getDoc,
   doc,
   setDoc,
+  updateDoc,
 } from "firebase/firestore";
-
 import { auth, firestore } from "./firebaseConfig";
+import { avatarMap, randomAvatarKey } from "../utils/randomAvatar";
+import type { ImageSourcePropType } from "react-native";
 
-// ✅ Login function
+export interface UserProfile {
+  uid: string;
+  nickname: string;
+  avatar: ImageSourcePropType;
+  avatarKey: string;
+}
+
 export const login = async (email: string, password: string) => {
-  try {
-    const userCredential = await signInWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
-    const user = userCredential.user;
-
-    if (!user) {
-      throw new Error("Login failed: No user data found");
-    }
-
-    // Retrieve user nickname from Firestore
-    const userRef = doc(firestore, "users", user.uid);
-    const userSnap = await getDoc(userRef);
-
-    if (userSnap.exists()) {
-      return { ...user, nickname: userSnap.data().nickname };
-    } else {
-      return { ...user, nickname: null };
-    }
-  } catch (error) {
-    console.error("❌ Login error:", error);
-    throw error;
-  }
+  const userCredential = await signInWithEmailAndPassword(
+    auth,
+    email,
+    password
+  );
+  const user = userCredential.user;
+  if (!user) throw new Error("Login failed: No user data found");
+  return user;
 };
 
-// ✅ Signup function
 export const signup = async (
   email: string,
   password: string,
   nickname: string
 ) => {
-  try {
-    // Create a new user with Firebase Authentication
-    const userCredential = await createUserWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
-    const user = userCredential.user;
+  const userCredential = await createUserWithEmailAndPassword(
+    auth,
+    email,
+    password
+  );
+  const user = userCredential.user;
+  if (!user) throw new Error("Signup error: No user data found");
 
-    if (!user) {
-      throw new Error("Signup error: No user data found");
-    }
+  const usersRef = collection(firestore, "users");
+  const nickQuery = query(usersRef, where("nickname", "==", nickname));
+  const nickSnap = await getDocs(nickQuery);
+  if (!nickSnap.empty) {
+    throw new Error("This nickname is already taken.");
+  }
 
-    // Check for duplicate nickname in Firestore
-    const usersRef = collection(firestore, "users");
-    const nicknameQuery = query(usersRef, where("nickname", "==", nickname));
-    const nicknameSnapshot = await getDocs(nicknameQuery);
+  const avatarKey = randomAvatarKey();
+  await setDoc(doc(firestore, "users", user.uid), {
+    uid: user.uid,
+    email: user.email,
+    nickname,
+    avatar: avatarKey,
+  });
 
-    if (!nicknameSnapshot.empty) {
-      console.error("❌ Nickname already in use");
-      throw new Error(
-        "This nickname is already taken. Please choose another one."
-      );
-    }
+  return { uid: user.uid, email: user.email, nickname };
+};
 
-    // Save user data in Firestore
-    await setDoc(doc(firestore, "users", user.uid), {
-      uid: user.uid,
-      email: user.email,
-      nickname: nickname,
-    });
+export const logout = async () => {
+  await signOut(auth);
+};
 
-    console.log("✅ User successfully saved to Firestore");
-    return { uid: user.uid, email: user.email, nickname };
-  } catch (error) {
-    console.error("❌ Signup error:", error);
-    throw error;
+export const getUserProfile = async (
+  uid: string
+): Promise<UserProfile | null> => {
+  const userDocRef = doc(firestore, "users", uid);
+  const userSnap = await getDoc(userDocRef);
+  if (!userSnap.exists()) return null;
+
+  const data = userSnap.data();
+  const nickname = typeof data.nickname === "string" ? data.nickname : "Player";
+
+  const key =
+    typeof data.avatar === "string" && avatarMap[data.avatar]
+      ? data.avatar
+      : "default";
+
+  return {
+    uid,
+    nickname,
+    avatarKey: key,
+    avatar: avatarMap[key],
+  };
+};
+
+export const updateNickname = async (
+  uid: string,
+  newNickname: string
+): Promise<void> => {
+  const usersRef = collection(firestore, "users");
+  const nickQuery = query(usersRef, where("nickname", "==", newNickname));
+  const nickSnap = await getDocs(nickQuery);
+  if (!nickSnap.empty) {
+    throw new Error("This nickname is already taken.");
+  }
+
+  const userRef = doc(firestore, "users", uid);
+  await updateDoc(userRef, { nickname: newNickname });
+
+  if (auth.currentUser) {
+    await updateProfile(auth.currentUser, { displayName: newNickname });
   }
 };
 
-// ✅ Logout function (ensuring onAuthStateChanged updates)
-export const logout = async () => {
-  try {
-    await signOut(auth);
-    console.log("✅ Successfully logged out");
-  } catch (error) {
-    console.error("❌ Logout error:", error);
-    throw error;
-  }
+export const updateAvatar = async (
+  uid: string,
+  avatarKey: string
+): Promise<void> => {
+  const userRef = doc(firestore, "users", uid);
+  await updateDoc(userRef, { avatar: avatarKey });
 };

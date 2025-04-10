@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
 import { handlePlayerMove } from "../firebase/roomManager";
 import { playLaserSound } from "../utils/soundEffects";
@@ -9,7 +9,6 @@ interface TicTacToeBoardProps {
   userId: string;
   rows?: number;
   cols?: number;
-  // onCellPress: (row: number, col: number) => void;
 }
 
 const TicTacToeBoard = ({
@@ -18,20 +17,35 @@ const TicTacToeBoard = ({
   userId,
   rows = 3,
   cols = 3,
-}: // onCellPress,
-TicTacToeBoardProps) => {
+}: TicTacToeBoardProps) => {
   const CELL_SIZE = 80;
   const THICKNESS = 10;
 
   const boardWidth = cols * CELL_SIZE;
   const boardHeight = rows * CELL_SIZE;
 
+  const prevBoardRef = useRef(board);
+
+  useEffect(() => {
+    const prevBoard = prevBoardRef.current;
+    let newMoveDetected = false;
+    for (const key in board) {
+      if (board[key] && board[key] !== prevBoard[key]) {
+        newMoveDetected = true;
+        break;
+      }
+    }
+    if (newMoveDetected) {
+      playLaserSound();
+    }
+    prevBoardRef.current = board;
+  }, [board]);
+
   const getCellColor = (rowIndex: number, colIndex: number) => {
     return (rowIndex + colIndex) % 2 === 0 ? "#e4e3f0" : "#FFFFFF";
   };
 
   const handleCellPress = (rowIndex: number, colIndex: number) => {
-    playLaserSound();
     handlePlayerMove(roomId, userId, rowIndex, colIndex);
   };
   return (
@@ -41,14 +55,13 @@ TicTacToeBoardProps) => {
         { width: boardWidth + THICKNESS, height: boardHeight + THICKNESS },
       ]}
     >
-      {/* Extruded background for a 3D effect */}
       <View
         style={[
           styles.boardExtrude,
           { width: boardWidth, height: boardHeight },
         ]}
       />
-      {/* Main game board surface */}
+
       <View
         style={[
           styles.boardSurface,
@@ -68,7 +81,14 @@ TicTacToeBoardProps) => {
                   ]}
                   onPress={() => handleCellPress(rowIndex, colIndex)}
                 >
-                  <Text style={styles.cellText}>{board[cellKey]}</Text>
+                  <Text
+                    style={[
+                      board[cellKey] === "X" && styles.cellText,
+                      board[cellKey] === "O" && styles.cellText2,
+                    ]}
+                  >
+                    {board[cellKey]}
+                  </Text>
                 </TouchableOpacity>
               );
             })}
@@ -115,5 +135,10 @@ const styles = StyleSheet.create({
     fontSize: 48,
     fontWeight: "900",
     color: "#e76679",
+  },
+  cellText2: {
+    fontSize: 48,
+    fontWeight: "900",
+    color: "#53b2df",
   },
 });
