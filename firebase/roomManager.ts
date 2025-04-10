@@ -1,3 +1,4 @@
+import { playLaserSound } from "../utils/soundEffects";
 import { firestore } from "./firebaseConfig";
 import {
   collection,
@@ -338,7 +339,6 @@ export const checkGameOver = async (roomId: string) => {
 
     // Update the room status to "finished" in Firestore.
     await updateDoc(roomRef, { status: "finished" });
-
     return winner;
   }
 
@@ -386,6 +386,7 @@ export const removeRoom = async (roomId: string) => {
   try {
     const roomRef = doc(firestore, "rooms", roomId);
     await deleteDoc(roomRef);
+
   } catch (error) {
     console.error("Error deleting room:", error);
   }
