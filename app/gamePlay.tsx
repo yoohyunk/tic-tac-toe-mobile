@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   AppState,
   View,
@@ -26,11 +26,7 @@ import * as Clipboard from "expo-clipboard";
 import { getEasyMove } from "../utils/easyBot";
 import { getHardMove } from "../utils/hardBot";
 import { convertBoardObjectToArray } from "../utils/helper";
-import {
-  playLaserSound,
-  playOverSound,
-  playStartSound,
-} from "../utils/soundEffects";
+import { playStartSound } from "../utils/soundEffects";
 import { avatarMap, randomAvatarKey } from "../utils/randomAvatar";
 import { getUserProfile } from "../firebase/auth";
 
@@ -47,20 +43,19 @@ export default function GamePlay() {
   const [loading, setLoading] = useState(true);
   const [boardSize, setBoardSize] = useState<number>(initialBoardSize);
 
-  const [aiAvatar, setAiAvatar] = useState<ImageSourcePropType>();
   const aiAvatarKey = randomAvatarKey();
   const [players, setPlayers] = useState<
     Array<{ uid: string; displayName: string; avatar?: ImageSourcePropType }>
   >([]);
-  const playerSymbol = isAIMode
-    ? "X"
-    : players.length === 2 && players[0].uid === user?.uid
-    ? "X"
-    : "O";
-  const [roomStatus, setRoomStatus] = useState<string>("waiting");
+
   const [roomType, setRoomType] = useState<string | null>(null);
 
   useEffect(() => {
+    setLoading(true);
+    setRoomId(null);
+    setBoard({});
+    setPlayers([]);
+
     if (user) {
       (async () => {
         let assignedRoom: string | null = null;
@@ -83,22 +78,9 @@ export default function GamePlay() {
             assignedRoom = await assignToAIBoard(user.uid, boardSize, aiLevel);
             setRoomType(params.type as string);
             const userProfile = await getUserProfile(user.uid);
-            setAiAvatar(avatarMap[aiAvatarKey]);
-            // setPlayers([
-            //   {
-            //     uid: user.uid,
-            //     displayName: userProfile?.nickname || "Player",
-            //     avatar: userProfile?.avatar || avatarMap[randomAvatarKey()],
-            //   },
-            //   {
-            //     uid: "AI",
-            //     displayName: "AI",
-            //     avatar: avatarMap[randomAvatarKey()],
-            //   },
-            // ]);
+
             playStartSound();
             Vibration.vibrate(1000);
-            setRoomStatus("playing");
           }
         }
 
@@ -109,11 +91,9 @@ export default function GamePlay() {
             setBoard,
             setTurn,
             async (playersArray: string[], status: string) => {
-              // fetch every profile (or generate AI)
               const fullProfiles = await Promise.all(
                 playersArray.map(async (uid) => {
                   if (uid === "AI") {
-                    setAiAvatar(avatarMap[aiAvatarKey]);
                     return {
                       uid: "AI",
                       displayName: "AI",
@@ -130,7 +110,7 @@ export default function GamePlay() {
               );
 
               setPlayers(fullProfiles);
-              setRoomStatus(status);
+              // setRoomStatus(status);
             },
             setBoardSize
           );
@@ -138,23 +118,20 @@ export default function GamePlay() {
         }
       })();
     }
-  }, [user, boardSize, params.room, params.type, params.continueRoom]);
+  }, [
+    user,
+    boardSize,
+    params.room,
+    params.type,
+    params.continueRoom,
+    params.reload,
+  ]);
 
   useEffect(() => {
     if (isAIMode && players.length === 2) {
       setLoading(false);
     }
   }, [players]);
-
-  useEffect(() => {
-    return () => {
-      if (roomId && user) {
-        if (roomType !== "invite") {
-          removeUserFromRoom(roomId, user.uid);
-        }
-      }
-    };
-  }, [roomId, user, roomType, params.continue]);
 
   useEffect(() => {
     if (!isAIMode) {
@@ -166,8 +143,10 @@ export default function GamePlay() {
             timeoutId = setTimeout(() => {
               removeUserFromRoom(roomId, user.uid);
             }, 5 * 60 * 1000);
-          } else if (params.type === "random") {
-            removeUserFromRoom(roomId, user.uid);
+          } else {
+            timeoutId = setTimeout(() => {
+              removeUserFromRoom(roomId, user.uid);
+            }, 5 * 60 * 1000);
           }
         } else if (nextAppState === "active" && timeoutId) {
           clearTimeout(timeoutId);
@@ -188,7 +167,7 @@ export default function GamePlay() {
 
   useEffect(() => {
     (async () => {
-      if (roomId && Object.keys(board).length > 0) {
+      if (roomId && Object.keys(board).length > 0 && players.length > 0) {
         const gameOver = await checkGameOver(roomId);
         const winner = gameOver === "X" ? players[0] : players[1];
         const userProfile =
@@ -211,7 +190,7 @@ export default function GamePlay() {
         }
       }
     })();
-  }, [roomId, board]);
+  }, [roomId, board, players, roomType]);
 
   useEffect(() => {
     if (
@@ -233,7 +212,6 @@ export default function GamePlay() {
         const col = aiMoveIndex % boardSize;
 
         await handlePlayerMove(roomId, "AI", row, col);
-        // playLaserSound();
       };
 
       const timer = setTimeout(runAIMove, 500);
@@ -248,19 +226,13 @@ export default function GamePlay() {
     }
   };
 
-  // const handleMove = async (row: number, col: number) => {
-  //   const cellKey = `${row}_${col}`;
-  //   if (turn === playerSymbol && board[cellKey] === "") {
-  //     // 사람 플레이어인 경우 실제 user.uid를 전달합니다.
-  //     await handlePlayerMove(roomId!, user.uid, row, col);
-  //   }
-  // };
-  const currentUser = players.find((p) => p.uid === user?.uid);
-
-  const opponent = players.find((p) => p.uid !== user?.uid);
-
   return (
-    <View style={styles.container}>
+    <View
+      key={
+        Array.isArray(params.reload) ? params.reload.join(",") : params.reload
+      }
+      style={styles.container}
+    >
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -283,13 +255,27 @@ export default function GamePlay() {
       <View style={styles.body}>
         <View style={styles.profiles}>
           <View style={styles.profile}>
-            <Text>{currentUser ? currentUser.displayName : "you"}</Text>
-            <View style={styles.profileImageContainer}>
-              <View style={styles.profilePic1}>
-                {currentUser?.avatar ? (
+            <Text>
+              {players.length > 1 && players[0]
+                ? players[0].displayName
+                : "you"}
+            </Text>
+            <View
+              style={[
+                styles.profileImageContainer,
+                turn === "X" && styles.profilePicActive,
+              ]}
+            >
+              <View
+                style={[
+                  styles.profilePic1,
+                  turn === "X" && styles.profilePicActive,
+                ]}
+              >
+                {players.length > 1 && players[0].avatar ? (
                   <Image
-                    source={currentUser.avatar}
-                    style={styles.avatarImage}
+                    source={players[0].avatar}
+                    style={[styles.avatarImage]}
                     resizeMode="cover"
                   />
                 ) : (
@@ -302,13 +288,27 @@ export default function GamePlay() {
             </View>
           </View>
           <View style={styles.profile}>
-            <Text>{opponent ? opponent.displayName : "opponent"}</Text>
-            <View style={styles.profileImageContainer}>
-              <View style={styles.profilePic2}>
-                {opponent?.avatar ? (
+            <Text>
+              {players.length > 1 && players[1]
+                ? players[1].displayName
+                : "opponent"}
+            </Text>
+            <View
+              style={[
+                styles.profileImageContainer,
+                turn === "O" && styles.profilePicActive,
+              ]}
+            >
+              <View
+                style={[
+                  styles.profilePic2,
+                  turn === "O" && styles.profilePicActive,
+                ]}
+              >
+                {players.length > 1 && players[1].avatar ? (
                   <Image
-                    source={opponent.avatar}
-                    style={styles.avatarImage}
+                    source={players[1].avatar}
+                    style={[styles.avatarImage]}
                     resizeMode="cover"
                   />
                 ) : (
@@ -366,8 +366,8 @@ export default function GamePlay() {
             />
             <Text style={styles.footerText}>
               {turn === "X"
-                ? `${currentUser?.displayName}'s Turn`
-                : `${opponent?.displayName}'s Turn`}
+                ? `${players[0].displayName}'s Turn`
+                : `${players[1].displayName}'s Turn`}
             </Text>
           </>
         )}
@@ -436,9 +436,10 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   profileImageContainer: {
-    position: "relative",
     alignItems: "center",
     justifyContent: "center",
+    width: 100,
+    height: 100,
   },
   profilePic1: {
     width: 100, // fixed size
@@ -446,19 +447,25 @@ const styles = StyleSheet.create({
     borderWidth: 20,
     borderColor: "#e76679",
     backgroundColor: "#FFF",
-    // paddingHorizontal: 13,
-    // paddingVertical: 20,
+
     borderRadius: 100,
     overflow: "hidden",
   },
+  avatarImageActive: {
+    width: 120,
+    height: 120,
+  },
+  profilePicActive: {
+    width: 120,
+    height: 120,
+  },
   profilePic2: {
-    width: 100, // fixed size
+    width: 100,
     height: 100,
     borderWidth: 20,
     borderColor: "#53b2df",
     backgroundColor: "#FFF",
-    // paddingHorizontal: 13,
-    // paddingVertical: 20,
+
     borderRadius: 100,
     overflow: "hidden",
   },
@@ -535,7 +542,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   avatarImage: {
-    width: "100%", // fill the parent
+    width: "100%",
     height: "100%",
     borderRadius: 0,
   },

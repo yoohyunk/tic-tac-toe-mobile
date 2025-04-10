@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { removeUserFromRoom } from "../firebase/roomManager";
+import { removeRoom, removeUserFromRoom } from "../firebase/roomManager";
 import { useAuth } from "../contexts/AuthContext";
 import { avatarMap } from "../utils/randomAvatar";
 import ButtonInIndex from "../components/ButtonInIndex";
@@ -46,18 +46,39 @@ export default function GameResult() {
             backgroundColor="#56b0e5"
           />
         ) : (
-          <ButtonInIndex
-            text="New Game"
-            route="/gamePlay"
-            param={{ type, row: rowNumber }}
-            backgroundColor="#56b0e5"
-          />
+          <TouchableOpacity
+            onPress={async () => {
+              if (room && user) {
+                try {
+                  await removeRoom(room); // 여기서 룸 삭제를 기다린 후
+                  playClickingSound();
+                } catch (error) {
+                  console.error("Error removing room:", error);
+                }
+              }
+              router.replace({
+                pathname: "/gamePlay",
+                params: {
+                  type,
+                  row: rowNumber,
+                  reload: Date.now(),
+                  room: undefined,
+                },
+              });
+            }}
+            style={styles.button}
+          >
+            <Text style={styles.buttonText}>New Game</Text>
+          </TouchableOpacity>
         )}
 
         <TouchableOpacity
           onPress={async () => {
             if (room && user) {
-              await removeUserFromRoom(room, user.uid);
+              if (type === "invite") {
+                await removeUserFromRoom(room, user.uid);
+              }
+
               playClickingSound();
             }
             router.push("/");
