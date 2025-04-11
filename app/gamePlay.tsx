@@ -169,18 +169,27 @@ export default function GamePlay() {
     (async () => {
       if (roomId && Object.keys(board).length > 0 && players.length > 0) {
         const gameOver = await checkGameOver(roomId);
-        const winner = gameOver === "X" ? players[0] : players[1];
-        const userProfile =
-          winner.displayName === "AI"
-            ? aiAvatarKey
-            : (await getUserProfile(winner.uid))?.avatarKey;
+        // const winner = gameOver === "X" ? players[0] : players[1];
+        const winner =
+          gameOver === "X" ? players[0] : gameOver === "O" ? players[1] : "Tie";
+
+        let userProfile;
+        if (gameOver !== "Tie") {
+          userProfile =
+            typeof winner === "object" && winner.displayName === "AI"
+              ? aiAvatarKey
+              : typeof winner === "object" && winner.uid
+              ? (await getUserProfile(winner.uid))?.avatarKey
+              : undefined;
+        }
+
         if (gameOver) {
           playStartSound();
           Vibration.vibrate(1000);
           router.push({
             pathname: "/gameResult",
             params: {
-              winner: winner.displayName,
+              winner: typeof winner === "object" ? winner.displayName : winner,
               winnerAvatar: userProfile,
               type: roomType,
               room: roomId,

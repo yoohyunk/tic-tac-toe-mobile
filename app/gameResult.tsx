@@ -27,7 +27,11 @@ export default function GameResult() {
             resizeMode="cover"
           />
         ) : (
-          <Text>profile{"\n"}picture</Text>
+          <Image
+            source={require("../avatars/Tie.png")}
+            style={styles.avatarImage}
+            resizeMode="cover"
+          />
         )}
       </View>
       <Text style={styles.message}>
