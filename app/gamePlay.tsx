@@ -73,6 +73,7 @@ export default function GamePlay() {
             setRoomType("invite");
             assignedRoom = await createInviteRoom(user.uid, boardSize);
           } else if (params.type === "random") {
+            setRoomType("random");
             assignedRoom = await assignToRoom(user.uid, boardSize);
           } else if (isAIMode) {
             assignedRoom = await assignToAIBoard(user.uid, boardSize, aiLevel);
@@ -110,7 +111,6 @@ export default function GamePlay() {
               );
 
               setPlayers(fullProfiles);
-              // setRoomStatus(status);
             },
             setBoardSize
           );
@@ -169,7 +169,6 @@ export default function GamePlay() {
     (async () => {
       if (roomId && Object.keys(board).length > 0 && players.length > 0) {
         const gameOver = await checkGameOver(roomId);
-        // const winner = gameOver === "X" ? players[0] : players[1];
         const winner =
           gameOver === "X" ? players[0] : gameOver === "O" ? players[1] : "Tie";
 

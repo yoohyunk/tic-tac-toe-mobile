@@ -54,7 +54,7 @@ export default function GameResult() {
             onPress={async () => {
               if (room && user) {
                 try {
-                  await removeRoom(room); // 여기서 룸 삭제를 기다린 후
+                  await removeUserFromRoom(room, user.uid);
                   playClickingSound();
                 } catch (error) {
                   console.error("Error removing room:", error);
@@ -79,9 +79,7 @@ export default function GameResult() {
         <TouchableOpacity
           onPress={async () => {
             if (room && user) {
-              if (type === "invite") {
-                await removeUserFromRoom(room, user.uid);
-              }
+              await removeUserFromRoom(room, user.uid);
 
               playClickingSound();
             }
